@@ -31,7 +31,7 @@ impl Player {
     }
 
     pub fn current_x_y_position_center(&self) -> (f32, f32) {
-        (self.logical_x + PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, self.logical_y + PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE)
+        (self.logical_x + PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE / 2.0, self.logical_y + PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE / 2.0)
     }
 
     pub fn move_horizontal(&mut self, distance: f32) {
@@ -39,7 +39,7 @@ impl Player {
     }
 
     pub fn move_horizontal_clamped(&mut self, distance: f32) {
-        
+
     }
 
     pub fn move_vertical(&mut self, distance: f32) {

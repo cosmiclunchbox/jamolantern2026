@@ -9,13 +9,21 @@ use crate::util::get_tile_size;
 pub struct Player {
     logical_x: f32,
     logical_y: f32,
+    tl_logical_x_bound: f32,
+    tl_logical_y_bound: f32,
+    br_logical_x_bound: f32,
+    br_logical_y_bound: f32,
 }
 
 impl Player {
-    pub fn new(spawn_x: f32, spawn_y: f32) -> Player {
+    pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32) -> Player {
         Player {
             logical_x: spawn_x,
-            logical_y: spawn_y
+            logical_y: spawn_y,
+            tl_logical_x_bound: leftmost_x,
+            tl_logical_y_bound: upmost_y,
+            br_logical_x_bound: rightmost_x,
+            br_logical_y_bound: downmost_y,
         }
     }
 
@@ -34,15 +42,26 @@ impl Player {
         (self.logical_x + PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE / 2.0, self.logical_y + PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE / 2.0)
     }
 
-    pub fn move_horizontal(&mut self, distance: f32) {
+    fn clamp_player_position(&mut self) {
+        self.logical_x = clamp(self.logical_x, self.tl_logical_x_bound, self.br_logical_x_bound - PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE);
+        self.logical_y = clamp(self.logical_y, self.tl_logical_y_bound, self.br_logical_y_bound - PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE);
+    }
+
+    fn move_horizontal(&mut self, distance: f32) {
         self.logical_x += distance;
     }
 
     pub fn move_horizontal_clamped(&mut self, distance: f32) {
-
+        self.move_horizontal(distance);
+        self.clamp_player_position();
     }
 
-    pub fn move_vertical(&mut self, distance: f32) {
+    fn move_vertical(&mut self, distance: f32) {
         self.logical_y += distance;
+    }
+
+    pub fn move_vertical_clamped(&mut self, distance: f32) {
+        self.move_vertical(distance);
+        self.clamp_player_position();
     }
 }

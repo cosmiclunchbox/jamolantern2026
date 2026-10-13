@@ -44,7 +44,14 @@ impl ActiveGameState {
             level.width as f32, 
             level.height as f32
         );
-        let player = Player::new(1.0, 1.0);
+        let player = Player::new(
+            1.0, 
+            1.0,
+            0.0, 
+            0.0, 
+            level.width as f32, 
+            level.height as f32
+        );
         ActiveGameState {
             level,
             camera,
@@ -65,16 +72,16 @@ impl ActiveGameState {
     fn update_on_each_frame(&mut self) {
         let delta_time = get_frame_time();
         if is_key_down(KeyCode::Right) {
-            self.player.move_horizontal(PLAYER_MOVEMENT_SPEED * delta_time);
+            self.player.move_horizontal_clamped(PLAYER_MOVEMENT_SPEED * delta_time);
         }
         if is_key_down(KeyCode::Left) {
-            self.player.move_horizontal(-PLAYER_MOVEMENT_SPEED * delta_time);
+            self.player.move_horizontal_clamped(-PLAYER_MOVEMENT_SPEED * delta_time);
         }
         if is_key_down(KeyCode::Down) {
-            self.player.move_vertical(PLAYER_MOVEMENT_SPEED * delta_time);
+            self.player.move_vertical_clamped(PLAYER_MOVEMENT_SPEED * delta_time);
         }
         if is_key_down(KeyCode::Up) {
-            self.player.move_vertical(-PLAYER_MOVEMENT_SPEED * delta_time);
+            self.player.move_vertical_clamped(-PLAYER_MOVEMENT_SPEED * delta_time);
         }
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

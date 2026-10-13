@@ -1,4 +1,6 @@
 use macroquad::prelude::*;
+use crate::camera::GameCamera;
+use crate::util::get_tile_size;
 
 const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 
@@ -17,7 +19,9 @@ impl LevelTile {
         }
     }
 
-    pub fn render(&self, top_left_x: f32, top_left_y: f32, tile_size: f32) {
+    pub fn render(&self, camera: &GameCamera, tl_logical_x: f32, tl_logical_y: f32) {
+        let tile_size = get_tile_size();
+        let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(tl_logical_x, tl_logical_y);
         match self {
             LevelTile::Air => {
                 draw_rectangle(top_left_x, top_left_y, tile_size, tile_size, BACKGROUND_COLOR);

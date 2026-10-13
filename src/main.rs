@@ -5,11 +5,15 @@ mod level;
 use level::Level;
 
 mod player;
+use crate::player::Player;
+
+mod camera;
+use camera::GameCamera;
 
 mod constants;
+use crate::constants::{WINDOW_TITLE, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED};
 
-use crate::constants::WINDOW_TITLE;
-use crate::constants::LEVEL_FILE_PATH;
+mod util;
 
 
 fn window_configuration() -> Conf {
@@ -24,14 +28,27 @@ fn window_configuration() -> Conf {
 
 
 struct ActiveGameState {
-    level: Level
+    level: Level,
+    camera: GameCamera,
+    player: Player
 }
 
 impl ActiveGameState {
     fn new() -> ActiveGameState {
         let level = Level::from_level_file(LEVEL_FILE_PATH);
+        let camera = GameCamera::new(
+            0.0, 
+            0.0, 
+            0.0, 
+            0.0, 
+            level.width as f32, 
+            level.height as f32
+        );
+        let player = Player::new(1.0, 1.0);
         ActiveGameState {
-            level
+            level,
+            camera,
+            player
         }
     }
 
@@ -41,11 +58,26 @@ impl ActiveGameState {
         draw_text("Hello, Macroquad!", 20.0, 20.0, 30.0, DARKGRAY);
         draw_fps();
 
-        self.level.render();
+        self.level.render(&self.camera);
+        self.player.render(&self.camera);
     }
 
-    fn update_on_each_frame(&self) {
-        // TODO
+    fn update_on_each_frame(&mut self) {
+        let delta_time = get_frame_time();
+        if is_key_down(KeyCode::Right) {
+            self.player.move_horizontal(PLAYER_MOVEMENT_SPEED * delta_time);
+        }
+        if is_key_down(KeyCode::Left) {
+            self.player.move_horizontal(-PLAYER_MOVEMENT_SPEED * delta_time);
+        }
+        if is_key_down(KeyCode::Down) {
+            self.player.move_vertical(PLAYER_MOVEMENT_SPEED * delta_time);
+        }
+        if is_key_down(KeyCode::Up) {
+            self.player.move_vertical(-PLAYER_MOVEMENT_SPEED * delta_time);
+        }
+        let (player_x, player_y) = self.player.current_x_y_position_center();
+        self.camera.track_target_position_clamped(player_x, player_y);
     }
 }
 
@@ -71,7 +103,7 @@ impl GameState {
         }
     }
 
-    fn update_on_each_frame(&self) {
+    fn update_on_each_frame(&mut self) {
         match self {
             GameState::Playing(s) => {
                 s.update_on_each_frame()
@@ -85,8 +117,9 @@ impl GameState {
 
 #[macroquad::main(window_configuration)]
 async fn main() {
-    let game_state = GameState::start();
+    let mut game_state = GameState::start();
     loop {
+        game_state.update_on_each_frame();
         game_state.render();
         next_frame().await
     }

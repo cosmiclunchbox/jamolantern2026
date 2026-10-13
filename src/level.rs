@@ -7,6 +7,7 @@ use macroquad::prelude::*;
 use std::fs;
 
 use crate::constants::NUM_TILES_PER_SCREEN_WIDTH;
+use crate::camera::GameCamera;
 
 //const NUM_TILES_PER_SCREEN_WIDTH: u32 = 12;
 
@@ -76,13 +77,12 @@ impl Level {
         }
     }
 
-    pub fn render(&self) {
-        let tile_size = screen_width() / (NUM_TILES_PER_SCREEN_WIDTH as f32);
+    pub fn render(&self, camera: &GameCamera) {
         let start_x = 0.0;
         let start_y = 0.0;
         for x in 0..self.width {
             for y in 0..self.height {
-                self.grid[(y, x)].render(start_x + (x as f32) * tile_size, start_y + (y as f32) * tile_size, tile_size);
+                self.grid[(y, x)].render(camera, x as f32, y as f32);
             }
         }
     }

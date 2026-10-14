@@ -7,15 +7,15 @@ const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 
 #[derive(Debug)]
 pub enum LevelTileType {
-    Air,
-    Ground
+    Ground,
+    Wall
 }
 
 impl LevelTileType {
     pub fn from_numeric_id(id: u32) -> LevelTileType {
         match id {
-            0 => LevelTileType::Air,
-            1 => LevelTileType::Ground,
+            0 => LevelTileType::Ground,
+            1 => LevelTileType::Wall,
             _ => panic!("Unrecognized tile id.")
         }
     }
@@ -23,10 +23,10 @@ impl LevelTileType {
     pub fn draw_tile_at_x_y_screen_position(&self, tl_screen_x: f32, tl_screen_y: f32) {
         let tile_size = get_tile_size();
         match self {
-            LevelTileType::Air => {
+            LevelTileType::Ground => {
                 draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, BACKGROUND_COLOR);
             },
-            LevelTileType::Ground => {
+            LevelTileType::Wall => {
                 draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GREEN);
             }
         }
@@ -62,13 +62,16 @@ impl LevelTile {
 
 impl MayHaveHitbox for LevelTile {
     fn get_hitbox(&self) -> Option<Rect> {
-        Some(
-            Rect {
-                x: self.tl_logical_x as f32,
-                y: self.tl_logical_y as f32,
-                w: 1.0,
-                h: 1.0
-            }
-        )
+        match self.tile_type {
+            LevelTileType::Ground => None,
+            LevelTileType::Wall => Some(
+                Rect {
+                    x: self.tl_logical_x as f32,
+                    y: self.tl_logical_y as f32,
+                    w: 1.0,
+                    h: 1.0
+                }
+            )
+        }
     }
 }

@@ -31,8 +31,7 @@ struct LevelCreationFileParsingResult {
 
 #[derive(Debug)]
 pub enum TouchingLevelElement {
-    None,
-    Ground,
+    Solid,
     Danger
 }
 
@@ -107,8 +106,8 @@ impl Level {
 
     fn tile_type_to_touching_level_element_result(tile_type: &LevelTileType) -> TouchingLevelElement {
         match tile_type {
-            LevelTileType::Air => TouchingLevelElement::None,
-            LevelTileType::Ground => TouchingLevelElement::Ground
+            LevelTileType::Wall => TouchingLevelElement::Solid,
+            _ => panic!("Attempted to collide with a noncollidable tile type.")
         }
     }
 
@@ -117,8 +116,6 @@ impl Level {
             |x| x.is_touching_hitbox(entity)
         ).map(
             |x| Level::tile_type_to_touching_level_element_result(&x.tile_type)
-        ).filter(
-            |x| match x { TouchingLevelElement::None => false, _ => true }
         ).collect()
     }
 }

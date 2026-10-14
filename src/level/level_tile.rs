@@ -38,7 +38,7 @@ impl LevelTileType {
 pub struct LevelTile {
     tl_logical_x: i32,
     tl_logical_y: i32,
-    tile_type: LevelTileType
+    pub tile_type: LevelTileType
 }
 
 impl LevelTile {

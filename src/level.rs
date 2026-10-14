@@ -5,10 +5,13 @@ pub use level_tile::LevelTile;
 use ndarray::Array2;
 use macroquad::prelude::*;
 use std::collections::HashMap;
+use std::f32::consts::E;
 use std::fs;
 
 use crate::constants::NUM_TILES_PER_SCREEN_WIDTH;
 use crate::camera::GameCamera;
+use crate::hitbox::MayHaveHitbox;
+use crate::level::level_tile::LevelTileType;
 
 //const NUM_TILES_PER_SCREEN_WIDTH: u32 = 12;
 
@@ -24,6 +27,12 @@ struct LevelCreationFileParsingResult {
     grid: HashMap<(i32, i32), LevelTile>,
     width: usize,
     height: usize
+}
+
+pub enum TouchingLevelElement {
+    None,
+    Ground,
+    Danger
 }
 
 impl Level {
@@ -93,5 +102,20 @@ impl Level {
                 self.grid.get(&(x as i32, y as i32)).expect("Entire rectangular grid should be tiles.").render(camera);
             }
         }
+    }
+
+    fn tile_type_to_touching_level_element_result(tile_type: &LevelTileType) -> TouchingLevelElement {
+        match tile_type {
+            LevelTileType::Air => TouchingLevelElement::None,
+            LevelTileType::Ground => TouchingLevelElement::Ground
+        }
+    }
+
+    pub fn get_tiles_that_entity_is_colliding_with<T: MayHaveHitbox>(&self, entity: &T) -> Vec<TouchingLevelElement> {
+        self.grid.values().filter(
+            |x| x.is_touching_hitbox(entity)
+        ).map(
+            |x| Level::tile_type_to_touching_level_element_result(&x.tile_type)
+        ).collect()
     }
 }

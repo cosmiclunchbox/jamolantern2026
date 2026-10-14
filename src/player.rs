@@ -1,5 +1,7 @@
 use macroquad::prelude::*;
 
+use crate::hitbox::MayHaveHitbox;
+
 use crate::camera::GameCamera;
 
 use crate::constants::{PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE};
@@ -63,5 +65,18 @@ impl Player {
     pub fn move_vertical_clamped(&mut self, distance: f32) {
         self.move_vertical(distance);
         self.clamp_player_position();
+    }
+}
+
+impl MayHaveHitbox for Player {
+    fn get_hitbox(&self) -> Option<Rect> {
+        Some(
+            Rect {
+                x: self.logical_x,
+                y: self.logical_y,
+                w: PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE,
+                h: PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE
+            }
+        )
     }
 }

@@ -4,6 +4,8 @@ use ndarray::Array2;
 mod level;
 use level::Level;
 
+mod hitbox;
+
 mod player;
 use crate::player::Player;
 

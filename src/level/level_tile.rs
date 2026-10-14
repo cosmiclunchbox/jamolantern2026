@@ -1,34 +1,74 @@
 use macroquad::prelude::*;
 use crate::camera::GameCamera;
 use crate::util::get_tile_size;
+use crate::hitbox::MayHaveHitbox;
 
 const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 
 #[derive(Debug)]
-pub enum LevelTile {
+pub enum LevelTileType {
     Air,
     Ground
 }
 
-impl LevelTile {
-    pub fn from_numeric_id(id: u32) -> LevelTile {
+impl LevelTileType {
+    pub fn from_numeric_id(id: u32) -> LevelTileType {
         match id {
-            0 => LevelTile::Air,
-            1 => LevelTile::Ground,
+            0 => LevelTileType::Air,
+            1 => LevelTileType::Ground,
             _ => panic!("Unrecognized tile id.")
         }
     }
 
-    pub fn render(&self, camera: &GameCamera, tl_logical_x: f32, tl_logical_y: f32) {
+    pub fn draw_tile_at_x_y_screen_position(&self, tl_screen_x: f32, tl_screen_y: f32) {
         let tile_size = get_tile_size();
-        let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(tl_logical_x, tl_logical_y);
         match self {
-            LevelTile::Air => {
-                draw_rectangle(top_left_x, top_left_y, tile_size, tile_size, BACKGROUND_COLOR);
+            LevelTileType::Air => {
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, BACKGROUND_COLOR);
             },
-            LevelTile::Ground => {
-                draw_rectangle(top_left_x, top_left_y, tile_size, tile_size, GREEN);
+            LevelTileType::Ground => {
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GREEN);
             }
         }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct LevelTile {
+    tl_logical_x: i32,
+    tl_logical_y: i32,
+    tile_type: LevelTileType
+}
+
+impl LevelTile {
+    pub fn from_x_y_and_tile_id(top_left_x: i32, top_left_y: i32, tile_type_id: u32) -> LevelTile {
+        LevelTile {
+            tl_logical_x: top_left_x,
+            tl_logical_y: top_left_y,
+            tile_type: LevelTileType::from_numeric_id(tile_type_id)
+        }
+    }
+
+    pub fn render(&self, camera: &GameCamera) {
+        let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(
+            self.tl_logical_x as f32, 
+            self.tl_logical_y as f32
+        );
+        self.tile_type.draw_tile_at_x_y_screen_position(top_left_x, top_left_y);
+    }
+}
+
+
+impl MayHaveHitbox for LevelTile {
+    fn get_hitbox(&self) -> Option<Rect> {
+        Some(
+            Rect {
+                x: self.tl_logical_x as f32,
+                y: self.tl_logical_y as f32,
+                w: 1.0,
+                h: 1.0
+            }
+        )
     }
 }

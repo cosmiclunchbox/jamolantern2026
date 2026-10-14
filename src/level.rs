@@ -29,6 +29,7 @@ struct LevelCreationFileParsingResult {
     height: usize
 }
 
+#[derive(Debug)]
 pub enum TouchingLevelElement {
     None,
     Ground,
@@ -116,6 +117,8 @@ impl Level {
             |x| x.is_touching_hitbox(entity)
         ).map(
             |x| Level::tile_type_to_touching_level_element_result(&x.tile_type)
+        ).filter(
+            |x| match x { TouchingLevelElement::None => false, _ => true }
         ).collect()
     }
 }

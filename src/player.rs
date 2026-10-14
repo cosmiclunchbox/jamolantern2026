@@ -4,7 +4,7 @@ use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
-use crate::constants::{PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::constants::{PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
 use crate::util::get_tile_size;
 
 // x, y are position of TOP LEFT CORNER of player hitbox
@@ -15,6 +15,8 @@ pub struct Player {
     tl_logical_y_bound: f32,
     br_logical_x_bound: f32,
     br_logical_y_bound: f32,
+    logical_x_velocity: f32,
+    logical_y_velocity: f32,
 }
 
 impl Player {
@@ -26,6 +28,8 @@ impl Player {
             tl_logical_y_bound: upmost_y,
             br_logical_x_bound: rightmost_x,
             br_logical_y_bound: downmost_y,
+            logical_x_velocity: 0.0,
+            logical_y_velocity: 0.0
         }
     }
 
@@ -65,6 +69,62 @@ impl Player {
     pub fn move_vertical_clamped(&mut self, distance: f32) {
         self.move_vertical(distance);
         self.clamp_player_position();
+    }
+
+    pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Player) -> bool) -> bool {
+        self.move_horizontal(distance);
+        let colliding = check_collision(self);
+        if colliding {
+            self.move_horizontal(-distance);
+        }
+        self.clamp_player_position();
+        colliding
+    }
+
+    pub fn move_vertical_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Player) -> bool) -> bool {
+        self.move_vertical(distance);
+        let colliding = check_collision(self);
+        if colliding {
+            self.move_vertical(-distance);
+        }
+        self.clamp_player_position();
+        colliding
+    }
+
+
+    pub fn set_horizontal_velocity(&mut self, velocity: f32) {
+        self.logical_x_velocity = velocity;
+    }
+
+    pub fn set_vertical_velocity(&mut self, velocity: f32) {
+        self.logical_y_velocity = velocity;
+    }
+
+    pub fn change_horizontal_velocity_with_friction(&mut self, acceleration: f32) {
+        self.logical_x_velocity += acceleration;
+        self.logical_x_velocity *= FRICTION;
+    }
+
+    pub fn change_vertical_velocity_with_friction(&mut self, acceleration: f32) {
+        self.logical_y_velocity += acceleration;
+        self.logical_y_velocity *= FRICTION;
+    }
+
+
+    pub fn move_horizontal_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Player) -> bool) -> bool {
+        let colliding = self.move_horizontal_clamped_check_collision(self.logical_x_velocity, check_collision);
+        if colliding {
+            self.set_horizontal_velocity(0.0);
+        }
+        colliding
+    }
+
+    pub fn move_vertical_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Player) -> bool) -> bool {
+        let colliding = self.move_vertical_clamped_check_collision(self.logical_y_velocity, check_collision);
+        if colliding {
+            self.set_vertical_velocity(0.0);
+        }
+        colliding
     }
 }
 

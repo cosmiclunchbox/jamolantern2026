@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
-use crate::level::Level;
+use crate::GameSceneTransition;
+use crate::level::{Level, TouchingLevelElement};
 use crate::player::Player;
 use crate::camera::GameCamera;
 use crate::constants::{LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED};
@@ -42,15 +43,18 @@ impl ActiveGameWorld {
         self.player.render(&self.camera);
 
         draw_text(String::from("FPS: ") + &get_fps().to_string(), 20.0, 20.0, 30.0, DARKGRAY);
+        draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);
         //draw_fps();
     }
 
-    pub fn update_on_each_frame(&mut self) {
+    pub fn update_on_each_frame(&mut self) -> GameSceneTransition {
         let delta_time = get_frame_time();
-        let check_collision = |p: &Player| {
+        let check_collision_with_ground = |p: &Player| {
             let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(p);
-            //println!("{:?}", colliding_tiles);
-            !colliding_tiles.is_empty()
+            let colliding_ground_tiles = colliding_tiles.iter().filter(
+                |x| match x { TouchingLevelElement::Solid => true, _ => false }
+            ).collect::<Vec<_>>();
+            !colliding_ground_tiles.is_empty()
         };
 
         let player_x_acceleration = PLAYER_MOVEMENT_SPEED * delta_time * (
@@ -77,12 +81,24 @@ impl ActiveGameWorld {
         }*/
 
         self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
-        self.player.move_horizontal_by_current_velocity_clamped_check_collision(check_collision);
+        self.player.move_horizontal_by_current_velocity_clamped_check_collision(check_collision_with_ground);
 
         self.player.change_vertical_velocity_with_friction(player_y_acceleration);
-        self.player.move_vertical_by_current_velocity_clamped_check_collision(check_collision);
+        self.player.move_vertical_by_current_velocity_clamped_check_collision(check_collision_with_ground);
+
+        let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
+            false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
+        );
+        if is_player_touching_danger_tile {
+            self.player.take_damage_if_not_iframe();
+        }
+        if self.player.is_dead() {
+            return GameSceneTransition::ToLoseScene;
+        }
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);
+
+        return GameSceneTransition::Continue;
     }
 }

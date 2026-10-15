@@ -2,14 +2,17 @@ use macroquad::prelude::*;
 
 mod level;
 mod hitbox;
+mod iframe;
 mod player;
 mod camera;
 mod constants;
 mod world;
 mod util;
+mod menus;
 
 use constants::WINDOW_TITLE;
 use world::ActiveGameWorld;
+use menus::GameOverMenu;
 
 
 fn window_configuration() -> Conf {
@@ -22,11 +25,18 @@ fn window_configuration() -> Conf {
     }
 }
 
+pub enum GameSceneTransition {
+    Continue,
+    ToNewGameScene,
+    ToWinScene,
+    ToLoseScene,
+}
+
 
 enum GameState {
     Playing(ActiveGameWorld),
     Win,
-    Lose
+    Lose(GameOverMenu)
 }
 
 impl GameState {
@@ -40,17 +50,28 @@ impl GameState {
                 s.render()
             },
             GameState::Win => (), // TODO
-            GameState::Lose => (), // TODO
+            GameState::Lose(m) => {
+                m.render()
+            }, // TODO
         }
     }
 
-    fn update_on_each_frame(&mut self) {
+    fn update_on_each_frame(&mut self) -> GameSceneTransition {
         match self {
             GameState::Playing(s) => {
                 s.update_on_each_frame()
             },
-            GameState::Win => (), // TODO
-            GameState::Lose => (), // TODO
+            GameState::Win => GameSceneTransition::Continue, // TODO
+            GameState::Lose(_m) => GameSceneTransition::Continue, // TODO
+        }
+    }
+
+    fn update_on_each_frame_and_transition_scene(mut self) -> GameState {
+        match self.update_on_each_frame() {
+            GameSceneTransition::Continue => self,
+            GameSceneTransition::ToLoseScene => GameState::Lose(GameOverMenu::new()),
+            GameSceneTransition::ToWinScene => GameState::Win,
+            GameSceneTransition::ToNewGameScene => GameState::start()
         }
     }
 }
@@ -60,7 +81,7 @@ impl GameState {
 async fn main() {
     let mut game_state = GameState::start();
     loop {
-        game_state.update_on_each_frame();
+        game_state = game_state.update_on_each_frame_and_transition_scene();
         game_state.render();
         next_frame().await
     }

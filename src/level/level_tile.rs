@@ -8,7 +8,8 @@ const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 #[derive(Debug)]
 pub enum LevelTileType {
     Ground,
-    Wall
+    Wall,
+    Sinkhole,
 }
 
 impl LevelTileType {
@@ -16,6 +17,7 @@ impl LevelTileType {
         match id {
             0 => LevelTileType::Ground,
             1 => LevelTileType::Wall,
+            2 => LevelTileType::Sinkhole,
             _ => panic!("Unrecognized tile id.")
         }
     }
@@ -28,7 +30,10 @@ impl LevelTileType {
             },
             LevelTileType::Wall => {
                 draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GREEN);
-            }
+            },
+            LevelTileType::Sinkhole => {
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, RED);
+            },
         }
     }
 }
@@ -64,7 +69,7 @@ impl MayHaveHitbox for LevelTile {
     fn get_hitbox(&self) -> Option<Rect> {
         match self.tile_type {
             LevelTileType::Ground => None,
-            LevelTileType::Wall => Some(
+            LevelTileType::Wall | LevelTileType::Sinkhole => Some(
                 Rect {
                     x: self.tl_logical_x as f32,
                     y: self.tl_logical_y as f32,

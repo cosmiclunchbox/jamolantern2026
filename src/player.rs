@@ -4,8 +4,9 @@ use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
-use crate::constants::{PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
+use crate::constants::{FRICTION, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::util::get_tile_size;
+use crate::iframe::IFrame;
 
 // x, y are position of TOP LEFT CORNER of player hitbox
 pub struct Player {
@@ -17,6 +18,8 @@ pub struct Player {
     br_logical_y_bound: f32,
     logical_x_velocity: f32,
     logical_y_velocity: f32,
+    health: u32,
+    previous_iframe: Option<IFrame>
 }
 
 impl Player {
@@ -29,7 +32,9 @@ impl Player {
             br_logical_x_bound: rightmost_x,
             br_logical_y_bound: downmost_y,
             logical_x_velocity: 0.0,
-            logical_y_velocity: 0.0
+            logical_y_velocity: 0.0,
+            health: PLAYER_MAX_HEALTH,
+            previous_iframe: None
         }
     }
 
@@ -37,7 +42,11 @@ impl Player {
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(self.logical_x, self.logical_y);
         let player_width = PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let player_height = PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
-        draw_rectangle(top_left_x, top_left_y, player_width, player_height, BLACK);
+        let player_color = match &self.previous_iframe {
+            None => BLACK,
+            Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKGRAY } else { BLACK }
+        };
+        draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
     }
 
     pub fn current_x_y_position_top_left(&self) -> (f32, f32) {
@@ -125,6 +134,30 @@ impl Player {
             self.set_vertical_velocity(0.0);
         }
         colliding
+    }
+
+    pub fn get_current_health(&self) -> u32 {
+        self.health
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.health == 0
+    }
+
+    fn take_damage(&mut self) {
+        self.health -= 1;
+        self.previous_iframe = Some(IFrame::new());
+    }
+
+    pub fn take_damage_if_not_iframe(&mut self) {
+        match &self.previous_iframe {
+            None => self.take_damage(),
+            Some(iframe) => {
+                if iframe.is_expired() {
+                    self.take_damage()
+                }
+            }
+        }
     }
 }
 

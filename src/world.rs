@@ -49,7 +49,9 @@ impl ActiveGameWorld {
 
     pub fn update_on_each_frame(&mut self) -> GameSceneTransition {
         let delta_time = get_frame_time();
-        let check_collision_with_ground = |p: &Player| {
+
+        // check collision with solids function
+        let check_collision_with_solid_tiles = |p: &Player| {
             let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(p);
             let colliding_ground_tiles = colliding_tiles.iter().filter(
                 |x| match x { TouchingLevelElement::Solid => true, _ => false }
@@ -81,10 +83,10 @@ impl ActiveGameWorld {
         }*/
 
         self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
-        self.player.move_horizontal_by_current_velocity_clamped_check_collision(check_collision_with_ground);
+        self.player.move_horizontal_by_current_velocity_clamped_check_collision(check_collision_with_solid_tiles);
 
         self.player.change_vertical_velocity_with_friction(player_y_acceleration);
-        self.player.move_vertical_by_current_velocity_clamped_check_collision(check_collision_with_ground);
+        self.player.move_vertical_by_current_velocity_clamped_check_collision(check_collision_with_solid_tiles);
 
         let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
             false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }

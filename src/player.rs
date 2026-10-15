@@ -66,18 +66,8 @@ impl Player {
         self.logical_x += distance;
     }
 
-    pub fn move_horizontal_clamped(&mut self, distance: f32) {
-        self.move_horizontal(distance);
-        self.clamp_player_position();
-    }
-
     fn move_vertical(&mut self, distance: f32) {
         self.logical_y += distance;
-    }
-
-    pub fn move_vertical_clamped(&mut self, distance: f32) {
-        self.move_vertical(distance);
-        self.clamp_player_position();
     }
 
     pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Player) -> bool) -> bool {
@@ -101,11 +91,11 @@ impl Player {
     }
 
 
-    pub fn set_horizontal_velocity(&mut self, velocity: f32) {
+    fn set_horizontal_velocity(&mut self, velocity: f32) {
         self.logical_x_velocity = velocity;
     }
 
-    pub fn set_vertical_velocity(&mut self, velocity: f32) {
+    fn set_vertical_velocity(&mut self, velocity: f32) {
         self.logical_y_velocity = velocity;
     }
 

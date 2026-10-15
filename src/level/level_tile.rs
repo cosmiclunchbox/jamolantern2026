@@ -26,10 +26,10 @@ impl LevelTileType {
         let tile_size = get_tile_size();
         match self {
             LevelTileType::Ground => {
-                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, BACKGROUND_COLOR);
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GREEN);
             },
             LevelTileType::Wall => {
-                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GREEN);
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, GRAY);
             },
             LevelTileType::Sinkhole => {
                 draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, RED);

@@ -11,6 +11,6 @@ impl GameOverMenu {
 
     pub fn render(&self) {
         clear_background(PURPLE);
-        draw_text("you died :(", 20.0, 100.0, 100.0, DARKGRAY);
+        draw_text("you died :(", 100.0, 200.0, 100.0, DARKGRAY);
     }
 }

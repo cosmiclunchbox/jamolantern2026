@@ -5,7 +5,7 @@ use crate::enemy::Enemy;
 use crate::level::{Level, LevelTileType};
 
 #[derive(Debug)]
-pub struct EnemyAI {
+pub struct EnemyPathfinding {
     enemy_center_logical_x: f32,
     enemy_center_logical_y: f32,
     destination_x: f32,
@@ -37,10 +37,10 @@ enum AlignmentRelativeToTile {
     TooFarDown
 }
 
-impl EnemyAI {
-    pub fn at_position(spawn_x: f32, spawn_y: f32) -> EnemyAI {
-        let (next_tile_index_x, next_tile_index_y) = EnemyAI::coordinates_to_tile_index(spawn_x, spawn_y);
-        EnemyAI {
+impl EnemyPathfinding {
+    pub fn at_position(spawn_x: f32, spawn_y: f32) -> EnemyPathfinding {
+        let (next_tile_index_x, next_tile_index_y) = EnemyPathfinding::coordinates_to_tile_index(spawn_x, spawn_y);
+        EnemyPathfinding {
             enemy_center_logical_x: spawn_x,
             enemy_center_logical_y: spawn_y,
             destination_x: spawn_x,
@@ -55,7 +55,7 @@ impl EnemyAI {
     }
 
     fn current_enemy_coordinates_to_tile_index(&self) -> (i32, i32) {
-        EnemyAI::coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y)
+        EnemyPathfinding::coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y)
     }
 
     fn current_alignment_relative_to_next_tile_position(&self) -> AlignmentRelativeToTile {
@@ -87,7 +87,7 @@ impl EnemyAI {
 
     pub fn get_next_enemy_direction_in_level(&mut self, level: &Level) -> EnemyDecision {
         let current_pos = self.current_enemy_coordinates_to_tile_index();
-        let target_pos = EnemyAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        let target_pos = EnemyPathfinding::coordinates_to_tile_index(self.destination_x, self.destination_y);
         if current_pos == target_pos {
             println!("YESSIR GOTEM");
             return EnemyDecision::StayStill;
@@ -150,7 +150,7 @@ impl EnemyAI {
 
     fn set_next_tile_and_determine_next_move_direction_based_on_target_location(&mut self, level: &Level) -> EnemyDecision {
         let current_pos = self.current_enemy_coordinates_to_tile_index();
-        let target_pos = EnemyAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        let target_pos = EnemyPathfinding::coordinates_to_tile_index(self.destination_x, self.destination_y);
 
         let Some(mut node_parents) = self.run_bfs(
             level, 

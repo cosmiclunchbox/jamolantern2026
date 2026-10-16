@@ -1,7 +1,10 @@
 pub enum EnemyAngerLevel {
     Neutral,
-    NeutralAlert,
     Alert,
-    Aggressive
+    Angry
 }
 
+pub enum EnemyType {
+    Neutral,
+    Aggressive
+}

@@ -15,7 +15,7 @@ use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, 
 use crate::util::get_tile_size;
 use crate::iframe::IFrame;
 
-use enemy_ai::EnemyAI;
+use enemy_ai::EnemyPathfinding;
 
 pub use enemy_ai::{EnemyDecision, MoveDirection};
 
@@ -32,7 +32,7 @@ pub struct Enemy {
     logical_y_velocity: f32,
     health: u32,
     previous_iframe: Option<IFrame>,
-    controller: EnemyAI
+    controller: EnemyPathfinding
 }
 
 impl Enemy {
@@ -48,7 +48,7 @@ impl Enemy {
             logical_y_velocity: 0.0,
             health: ENEMY_MAX_HEALTH,
             previous_iframe: None,
-            controller: EnemyAI::at_position(spawn_x, spawn_y)
+            controller: EnemyPathfinding::at_position(spawn_x, spawn_y)
         }
     }
 

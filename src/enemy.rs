@@ -126,6 +126,7 @@ impl Enemy {
 
 
     pub fn move_horizontal_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Enemy) -> bool) -> bool {
+        //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
         let colliding = self.move_horizontal_clamped_check_collision(self.logical_x_velocity, check_collision);
         if colliding {
             self.set_horizontal_velocity(0.0);
@@ -134,6 +135,7 @@ impl Enemy {
     }
 
     pub fn move_vertical_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Enemy) -> bool) -> bool {
+        //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
         let colliding = self.move_vertical_clamped_check_collision(self.logical_y_velocity, check_collision);
         if colliding {
             self.set_vertical_velocity(0.0);

@@ -113,20 +113,27 @@ impl ActiveGameWorld {
         // enemy ai (yes I know this hsould be its own function)
         let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
         //println!("{:?}", self.enemy.current_x_y_position_center());
-        //println!("{:?}", enemy_decision);
-        println!("{:?}", (self.enemy.get_current_target()));
+        println!("{:?}", enemy_decision);
+        //println!("{:?}", (self.enemy.get_current_target()));
         match enemy_decision {
-            EnemyDecision::StayStill => {},
+            EnemyDecision::StayStill => {
+                self.enemy.change_vertical_velocity_with_friction(0.0);
+                self.enemy.change_horizontal_velocity_with_friction(0.0);
+            },
             EnemyDecision::Move(MoveDirection::Up) => {
                 self.enemy.change_vertical_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
+                self.enemy.change_horizontal_velocity_with_friction(0.0);
             },
             EnemyDecision::Move(MoveDirection::Down) => {
                 self.enemy.change_vertical_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
+                self.enemy.change_horizontal_velocity_with_friction(0.0);
             },
             EnemyDecision::Move(MoveDirection::Left) => {
+                self.enemy.change_vertical_velocity_with_friction(0.0);
                 self.enemy.change_horizontal_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
             },
             EnemyDecision::Move(MoveDirection::Right) => {
+                self.enemy.change_vertical_velocity_with_friction(0.0);
                 self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
             },
         }

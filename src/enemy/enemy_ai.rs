@@ -64,16 +64,16 @@ impl EnemyAI {
     }
 
     fn current_alignment_relative_to_next_tile_position(&self) -> AlignmentRelativeToTile {
-        return if self.enemy_center_logical_x > self.next_tile_index_x as f32 &&
-            self.enemy_center_logical_x < self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE &&
-            self.enemy_center_logical_y > self.next_tile_index_y as f32 && 
-            self.enemy_center_logical_y < self.next_tile_index_y as f32 + 1.0 - ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE {
+        return if self.enemy_center_logical_x > self.next_tile_index_x as f32 + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5 &&
+            self.enemy_center_logical_x < self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5 &&
+            self.enemy_center_logical_y > self.next_tile_index_y as f32 + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5 && 
+            self.enemy_center_logical_y < self.next_tile_index_y as f32 + 1.0 - ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5 {
             AlignmentRelativeToTile::Aligned
-        } else if self.enemy_center_logical_x <= self.next_tile_index_x as f32 {
+        } else if self.enemy_center_logical_x <= self.next_tile_index_x as f32 + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5 {
             AlignmentRelativeToTile::TooFarLeft
-        } else if self.enemy_center_logical_x >= self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE {
+        } else if self.enemy_center_logical_x >= self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5 {
             AlignmentRelativeToTile::TooFarRight
-        } else if self.enemy_center_logical_y <= self.next_tile_index_y as f32 {
+        } else if self.enemy_center_logical_y <= self.next_tile_index_y as f32 + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5 {
             AlignmentRelativeToTile::TooFarUp
         } else {
             AlignmentRelativeToTile::TooFarDown
@@ -91,6 +91,13 @@ impl EnemyAI {
     }
 
     pub fn get_next_enemy_direction_in_level(&mut self, level: &Level) -> EnemyDecision {
+        let current_pos = self.current_enemy_coordinates_to_tile_index();
+        let target_pos = EnemyAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        if current_pos == target_pos {
+            println!("YESSIR GOTEM");
+            return EnemyDecision::StayStill;
+        }
+
         let alignment_relative_to_next_tile = self.current_alignment_relative_to_next_tile_position();
         match alignment_relative_to_next_tile {
             AlignmentRelativeToTile::TooFarUp => EnemyDecision::Move(MoveDirection::Down),
@@ -111,10 +118,11 @@ impl EnemyAI {
         empty_neighbors
     }
 
-    fn set_next_tile_and_determine_next_move_direction_based_on_target_location(&mut self, level: &Level) -> EnemyDecision {
+    fn run_bfs(&self, level: &Level, start_pos: (i32, i32), target_pos: (i32, i32)) -> Option<HashMap<(i32, i32), (i32, i32)>> {
+        // returns map of tiles to their parents in the path
         // chunky function incoming!!!
-        let (current_tile_index_x, current_tile_index_y) = self.current_enemy_coordinates_to_tile_index();
-        let (target_tile_index_x, target_tile_index_y) = EnemyAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        let (current_tile_index_x, current_tile_index_y) = start_pos;
+        let (target_tile_index_x, target_tile_index_y) = target_pos;
 
         // run a bfs to find the shortest path
         // yes I know this is horribly written code that should be abstracted into multiple functions
@@ -129,11 +137,11 @@ impl EnemyAI {
         loop {
             let Some(next_tile_to_check) = pending.pop_front() else {
                 // no path found to target
-                return EnemyDecision::StayStill;
+                return None;
             };
             if next_tile_to_check == (target_tile_index_x, target_tile_index_y) {
                 //println!("OH BABY");
-                break;
+                break Some(node_parents);
             }
             let neighbors = self.get_empty_neighboring_spaces(next_tile_to_check.0, next_tile_to_check.1, level);
             for neighbor in neighbors {
@@ -143,9 +151,22 @@ impl EnemyAI {
                 }
             }
         }
+    }
+
+    fn set_next_tile_and_determine_next_move_direction_based_on_target_location(&mut self, level: &Level) -> EnemyDecision {
+        let current_pos = self.current_enemy_coordinates_to_tile_index();
+        let target_pos = EnemyAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
+
+        let Some(mut node_parents) = self.run_bfs(
+            level, 
+            current_pos,
+            target_pos
+        ) else {
+            return EnemyDecision::StayStill;
+        };
 
         // backtracking through bfs pointers to get the next tile to move to from the current position
-        let mut next_tile_to_check = (target_tile_index_x, target_tile_index_y);
+        let mut next_tile_to_check = target_pos;
         loop {
             let Some(&parent) = node_parents.get(&next_tile_to_check) else {
                 panic!("this shouldn't happen, should get to starting node without exhausting all parents 2394");
@@ -155,7 +176,7 @@ impl EnemyAI {
             //println!("CURRENT: {:?}", (current_tile_index_x, current_tile_index_y));
             //println!("{:?} --> {:?}", next_tile_to_check, parent);
 
-            if parent == (current_tile_index_x, current_tile_index_y) {
+            if parent == current_pos {
                 break;
             } else {
                 node_parents.remove(&next_tile_to_check);

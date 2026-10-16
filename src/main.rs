@@ -4,6 +4,7 @@ mod level;
 mod hitbox;
 mod iframe;
 mod player;
+mod enemy;
 mod camera;
 mod constants;
 mod world;

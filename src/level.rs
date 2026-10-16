@@ -11,7 +11,7 @@ use std::fs;
 use crate::constants::NUM_TILES_PER_SCREEN_WIDTH;
 use crate::camera::GameCamera;
 use crate::hitbox::MayHaveHitbox;
-use crate::level::level_tile::LevelTileType;
+pub use crate::level::level_tile::LevelTileType;
 
 //const NUM_TILES_PER_SCREEN_WIDTH: u32 = 12;
 
@@ -24,7 +24,7 @@ pub struct Level {
 }
 
 struct LevelCreationFileParsingResult {
-    grid: HashMap<(i32, i32), LevelTile>,
+    grid: HashMap<(i32, i32), LevelTile>, // (x, y) -> tile
     width: usize,
     height: usize
 }
@@ -118,5 +118,12 @@ impl Level {
         ).map(
             |x| Level::tile_type_to_touching_level_element_result(&x.tile_type)
         ).collect()
+    }
+
+    pub fn get_tile_type_at_coordinates(&self, x: i32, y: i32) -> Option<LevelTileType> {
+        let Some(tile) = self.grid.get(&(x, y)) else {
+            return None;
+        };
+        Some(tile.tile_type.clone())
     }
 }

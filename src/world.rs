@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::GameSceneTransition;
+use crate::enemy::Enemy;
 use crate::level::{Level, TouchingLevelElement};
 use crate::player::Player;
 use crate::camera::GameCamera;
@@ -9,7 +10,8 @@ use crate::constants::{LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED};
 pub struct ActiveGameWorld {
     level: Level,
     camera: GameCamera,
-    player: Player
+    player: Player,
+    enemy: Enemy
 }
 
 impl ActiveGameWorld {
@@ -31,10 +33,19 @@ impl ActiveGameWorld {
             level.width as f32, 
             level.height as f32
         );
+        let enemy = Enemy::new(
+            15.0,
+            1.0,
+            0.0, 
+            0.0, 
+            level.width as f32, 
+            level.height as f32
+        );
         ActiveGameWorld {
             level,
             camera,
-            player
+            player,
+            enemy
         }
     }
 

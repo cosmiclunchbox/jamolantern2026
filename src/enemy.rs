@@ -15,7 +15,7 @@ use crate::iframe::IFrame;
 use enemy_ai::EnemyAI;
 
 // x, y are position of TOP LEFT CORNER of enemy hitbox
-pub struct Enemy<'a> {
+pub struct Enemy {
     logical_x: f32,
     logical_y: f32,
     tl_logical_x_bound: f32,
@@ -26,11 +26,11 @@ pub struct Enemy<'a> {
     logical_y_velocity: f32,
     health: u32,
     previous_iframe: Option<IFrame>,
-    controller: EnemyAI<'a>
+    controller: EnemyAI
 }
 
-impl<'a> Enemy<'a> {
-    pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32, level: &'a Level) -> Enemy {
+impl Enemy {
+    pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32) -> Enemy {
         Enemy {
             logical_x: spawn_x,
             logical_y: spawn_y,
@@ -42,7 +42,7 @@ impl<'a> Enemy<'a> {
             logical_y_velocity: 0.0,
             health: ENEMY_MAX_HEALTH,
             previous_iframe: None,
-            controller: EnemyAI::at_position(spawn_x, spawn_y, level)
+            controller: EnemyAI::at_position(spawn_x, spawn_y)
         }
     }
 
@@ -159,7 +159,7 @@ impl<'a> Enemy<'a> {
     }
 }
 
-impl MayHaveHitbox for Enemy<'_> {
+impl MayHaveHitbox for Enemy {
     fn get_hitbox(&self) -> Option<Rect> {
         Some(
             Rect {

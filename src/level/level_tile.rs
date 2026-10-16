@@ -5,7 +5,7 @@ use crate::hitbox::MayHaveHitbox;
 
 const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum LevelTileType {
     Ground,
     Wall,

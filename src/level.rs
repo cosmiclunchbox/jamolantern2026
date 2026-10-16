@@ -39,7 +39,7 @@ impl Level {
 
     pub fn from_level_file(file_path: &str) -> Level {
         let LevelCreationFileParsingResult { grid, width, height } = Level::read_level_file_into_vec_of_vecs(file_path);
-        println!("{:?}", grid);
+        //println!("{:?}", grid);
         Level {
             width,
             height,

@@ -2,6 +2,7 @@ use time::{Timestamp, SignedDuration};
 
 use crate::constants::{IFRAME_DURATION_MS, IFRAME_VISUAL_DAMAGE_TICK_LENGTH_MS};
 
+#[derive(Debug)]
 pub struct IFrame {
     damage_tick_ends_at: Timestamp,
     expires_at: Timestamp

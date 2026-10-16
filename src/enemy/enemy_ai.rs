@@ -4,13 +4,14 @@ use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_WIDTH_AS_MUL
 use crate::enemy::Enemy;
 use crate::level::{Level, LevelTileType};
 
+#[derive(Debug)]
 pub struct EnemyAI {
-    enemy_tl_logical_x: f32,
-    enemy_tl_logical_y: f32,
+    enemy_center_logical_x: f32,
+    enemy_center_logical_y: f32,
     destination_x: f32,
     destination_y: f32,
-    next_tile_index_x: i32, // adjacent to current tile
-    next_tile_index_y: i32, // adjacent to current tile
+    pub next_tile_index_x: i32, // adjacent to current tile
+    pub next_tile_index_y: i32, // adjacent to current tile
 }
 
 struct InWhichTile {
@@ -19,6 +20,7 @@ struct InWhichTile {
     fully_on_tile: AlignmentRelativeToTile,
 }
 
+#[derive(Debug)]
 pub enum MoveDirection {
     Up,
     Down,
@@ -26,6 +28,7 @@ pub enum MoveDirection {
     Right
 }
 
+#[derive(Debug)]
 pub enum EnemyDecision {
     StayStill,
     Move(MoveDirection)
@@ -43,8 +46,8 @@ impl EnemyAI {
     pub fn at_position(spawn_x: f32, spawn_y: f32) -> EnemyAI {
         let (next_tile_index_x, next_tile_index_y) = EnemyAI::coordinates_to_tile_index(spawn_x, spawn_y);
         EnemyAI {
-            enemy_tl_logical_x: spawn_x,
-            enemy_tl_logical_y: spawn_y,
+            enemy_center_logical_x: spawn_x,
+            enemy_center_logical_y: spawn_y,
             destination_x: spawn_x,
             destination_y: spawn_y,
             next_tile_index_x,
@@ -57,32 +60,37 @@ impl EnemyAI {
     }
 
     fn current_enemy_coordinates_to_tile_index(&self) -> (i32, i32) {
-        EnemyAI::coordinates_to_tile_index(self.enemy_tl_logical_x, self.enemy_tl_logical_y)
+        EnemyAI::coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y)
     }
 
     fn current_alignment_relative_to_next_tile_position(&self) -> AlignmentRelativeToTile {
-        return if self.enemy_tl_logical_x > self.next_tile_index_x as f32 &&
-            self.enemy_tl_logical_x < self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE &&
-            self.enemy_tl_logical_y > self.next_tile_index_y as f32 && 
-            self.enemy_tl_logical_y < self.next_tile_index_y as f32 + 1.0 - ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE {
+        return if self.enemy_center_logical_x > self.next_tile_index_x as f32 &&
+            self.enemy_center_logical_x < self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE &&
+            self.enemy_center_logical_y > self.next_tile_index_y as f32 && 
+            self.enemy_center_logical_y < self.next_tile_index_y as f32 + 1.0 - ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE {
             AlignmentRelativeToTile::Aligned
-        } else if self.enemy_tl_logical_x <= self.next_tile_index_x as f32 {
+        } else if self.enemy_center_logical_x <= self.next_tile_index_x as f32 {
             AlignmentRelativeToTile::TooFarLeft
-        } else if self.enemy_tl_logical_x >= self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE {
+        } else if self.enemy_center_logical_x >= self.next_tile_index_x as f32 + 1.0 - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE {
             AlignmentRelativeToTile::TooFarRight
-        } else if self.enemy_tl_logical_y <= self.next_tile_index_y as f32 {
+        } else if self.enemy_center_logical_y <= self.next_tile_index_y as f32 {
             AlignmentRelativeToTile::TooFarUp
         } else {
             AlignmentRelativeToTile::TooFarDown
         }
     }
 
-    fn set_target_location(&mut self, x: f32, y: f32) {
+    pub fn update_current_enemy_center_position(&mut self, x: f32, y: f32) {
+        self.enemy_center_logical_x = x;
+        self.enemy_center_logical_y = y;
+    }
+
+    pub fn set_target_location(&mut self, x: f32, y: f32) {
         self.destination_x = x;
         self.destination_y = y;
     }
 
-    fn get_next_enemy_direction_in_level(&mut self, level: &Level) -> EnemyDecision {
+    pub fn get_next_enemy_direction_in_level(&mut self, level: &Level) -> EnemyDecision {
         let alignment_relative_to_next_tile = self.current_alignment_relative_to_next_tile_position();
         match alignment_relative_to_next_tile {
             AlignmentRelativeToTile::TooFarUp => EnemyDecision::Move(MoveDirection::Down),
@@ -124,6 +132,7 @@ impl EnemyAI {
                 return EnemyDecision::StayStill;
             };
             if next_tile_to_check == (target_tile_index_x, target_tile_index_y) {
+                //println!("OH BABY");
                 break;
             }
             let neighbors = self.get_empty_neighboring_spaces(next_tile_to_check.0, next_tile_to_check.1, level);
@@ -143,11 +152,14 @@ impl EnemyAI {
                 break;
             };
 
+            //println!("CURRENT: {:?}", (current_tile_index_x, current_tile_index_y));
+            //println!("{:?} --> {:?}", next_tile_to_check, parent);
+
             if parent == (current_tile_index_x, current_tile_index_y) {
                 break;
             } else {
-                next_tile_to_check = parent;
                 node_parents.remove(&next_tile_to_check);
+                next_tile_to_check = parent;
             }
         };
         let (next_tile_x, next_tile_y) = next_tile_to_check;

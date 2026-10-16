@@ -8,13 +8,18 @@ use crate::camera::GameCamera;
 
 use crate::level::Level;
 
-use crate::constants::{FRICTION, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::player::Player;
+
+use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MOVEMENT_SPEED, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
 use crate::util::get_tile_size;
 use crate::iframe::IFrame;
 
 use enemy_ai::EnemyAI;
 
+pub use enemy_ai::{EnemyDecision, MoveDirection};
+
 // x, y are position of TOP LEFT CORNER of enemy hitbox
+#[derive(Debug)]
 pub struct Enemy {
     logical_x: f32,
     logical_y: f32,
@@ -51,8 +56,8 @@ impl Enemy {
         let enemy_width = ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_height = ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_color = match &self.previous_iframe {
-            None => BLACK,
-            Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { YELLOW }
+            None => BLUE,
+            Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { BLUE }
         };
         draw_rectangle(top_left_x, top_left_y, enemy_width, enemy_height, enemy_color);
     }
@@ -81,6 +86,7 @@ impl Enemy {
     pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Enemy) -> bool) -> bool {
         self.move_horizontal(distance);
         let colliding = check_collision(self);
+        //println!("{}", colliding);
         if colliding {
             self.move_horizontal(-distance);
         }
@@ -91,6 +97,7 @@ impl Enemy {
     pub fn move_vertical_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Enemy) -> bool) -> bool {
         self.move_vertical(distance);
         let colliding = check_collision(self);
+        //println!("{}", colliding);
         if colliding {
             self.move_vertical(-distance);
         }
@@ -156,6 +163,20 @@ impl Enemy {
                 }
             }
         }
+    }
+
+    pub fn get_current_target(&self) -> (i32, i32) {
+        (self.controller.next_tile_index_x, self.controller.next_tile_index_y)
+    }
+
+    pub fn decide_next_action(&mut self, level: &Level, player: &Player) -> EnemyDecision {
+        self.controller.update_current_enemy_center_position(
+            self.logical_x + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5,
+            self.logical_y + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5
+        );
+        let (player_x, player_y) = player.current_x_y_position_center();
+        self.controller.set_target_location(player_x, player_y);
+        self.controller.get_next_enemy_direction_in_level(level)
     }
 }
 

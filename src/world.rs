@@ -5,7 +5,7 @@ use crate::enemy::{Enemy, EnemyDecision, MoveDirection};
 use crate::level::{Level, TouchingLevelElement};
 use crate::player::Player;
 use crate::camera::GameCamera;
-use crate::constants::{ENEMY_MOVEMENT_SPEED, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED};
+use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
 
 pub struct ActiveGameWorld {
     level: Level,
@@ -58,7 +58,11 @@ impl ActiveGameWorld {
         draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);
         draw_text(
             String::from("player pos: ") + &self.player.current_x_y_position_center().0.to_string() + ", " + &self.player.current_x_y_position_center().1.to_string(), 
-            20.0, 150.0, 50.0, DARKGRAY);
+            20.0, 120.0, 30.0, DARKGRAY);
+        draw_text(
+            String::from("player vel: ") + &self.player.get_current_velocity().0.to_string() + ", " + &self.player.get_current_velocity().1.to_string(), 
+            20.0, 140.0, 30.0, DARKGRAY);
+        //draw_fps();
         //draw_fps();
     }
 
@@ -98,10 +102,16 @@ impl ActiveGameWorld {
         }*/
 
         self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
-        self.player.move_horizontal_by_current_velocity_clamped_check_collision(check_collision_with_solid_tiles);
+        self.player.move_horizontal_by_current_velocity_clamped_check_collision(
+            PLAYER_MOVEMENT_SPEED_THRESHOLD * delta_time,
+            check_collision_with_solid_tiles
+        );
 
         self.player.change_vertical_velocity_with_friction(player_y_acceleration);
-        self.player.move_vertical_by_current_velocity_clamped_check_collision(check_collision_with_solid_tiles);
+        self.player.move_vertical_by_current_velocity_clamped_check_collision(
+            PLAYER_MOVEMENT_SPEED_THRESHOLD * delta_time,
+            check_collision_with_solid_tiles
+        );
 
         let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
             false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
@@ -148,8 +158,14 @@ impl ActiveGameWorld {
             !colliding_ground_tiles.is_empty()
         };
 
-        self.enemy.move_horizontal_by_current_velocity_clamped_check_collision(check_enemy_collision_with_solid_tiles);
-        self.enemy.move_vertical_by_current_velocity_clamped_check_collision(check_enemy_collision_with_solid_tiles);
+        self.enemy.move_horizontal_by_current_velocity_clamped_check_collision(
+            ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
+            check_enemy_collision_with_solid_tiles
+        );
+        self.enemy.move_vertical_by_current_velocity_clamped_check_collision(
+            ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
+            check_enemy_collision_with_solid_tiles
+        );
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

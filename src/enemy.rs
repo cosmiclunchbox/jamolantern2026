@@ -1,4 +1,5 @@
 mod enemy_ai;
+mod enemy_anger;
 
 use macroquad::prelude::*;
 
@@ -125,8 +126,15 @@ impl Enemy {
     }
 
 
-    pub fn move_horizontal_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Enemy) -> bool) -> bool {
+    pub fn move_horizontal_by_current_velocity_clamped_check_collision(
+        &mut self, 
+        velocity_threshold: f32,
+        check_collision: impl Fn(&Enemy) -> bool
+    ) -> bool {
         //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
+        if self.logical_x_velocity.abs() < velocity_threshold {
+            self.set_horizontal_velocity(0.0);
+        }
         let colliding = self.move_horizontal_clamped_check_collision(self.logical_x_velocity, check_collision);
         if colliding {
             self.set_horizontal_velocity(0.0);
@@ -134,8 +142,15 @@ impl Enemy {
         colliding
     }
 
-    pub fn move_vertical_by_current_velocity_clamped_check_collision(&mut self, check_collision: impl Fn(&Enemy) -> bool) -> bool {
+    pub fn move_vertical_by_current_velocity_clamped_check_collision(
+        &mut self, 
+        velocity_threshold: f32,
+        check_collision: impl Fn(&Enemy) -> bool
+    ) -> bool {
         //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
+        if self.logical_y_velocity.abs() < velocity_threshold {
+            self.set_vertical_velocity(0.0);
+        }
         let colliding = self.move_vertical_clamped_check_collision(self.logical_y_velocity, check_collision);
         if colliding {
             self.set_vertical_velocity(0.0);
@@ -186,8 +201,8 @@ impl MayHaveHitbox for Enemy {
     fn get_hitbox(&self) -> Option<Rect> {
         Some(
             Rect {
-                x: self.logical_x,
-                y: self.logical_y,
+                x: (self.logical_x * 100.).round() * 0.01,
+                y: (self.logical_y * 100.).round() * 0.01,
                 w: ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE,
                 h: ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE
             }

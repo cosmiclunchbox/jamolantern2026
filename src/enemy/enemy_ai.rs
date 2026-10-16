@@ -14,11 +14,6 @@ pub struct EnemyAI {
     pub next_tile_index_y: i32, // adjacent to current tile
 }
 
-struct InWhichTile {
-    tile_index_x: i32,
-    tile_index_y: i32,
-    fully_on_tile: AlignmentRelativeToTile,
-}
 
 #[derive(Debug)]
 pub enum MoveDirection {
@@ -110,7 +105,7 @@ impl EnemyAI {
 
     fn get_empty_neighboring_spaces(&self, x: i32, y: i32, level: &Level) -> Vec<(i32, i32)> {
         let mut empty_neighbors = Vec::new();
-        for (n_x, n_y) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] {
+        for (n_x, n_y) in [(x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y),] {
             if let Some(LevelTileType::Ground) = level.get_tile_type_at_coordinates(n_x, n_y) {
                 empty_neighbors.push((n_x, n_y));
             }

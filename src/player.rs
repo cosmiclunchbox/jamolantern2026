@@ -64,10 +64,12 @@ impl Player {
 
     fn move_horizontal(&mut self, distance: f32) {
         self.logical_x += distance;
+        //self.logical_x = (self.logical_x * 100.0).round() / 100.0;
     }
 
     fn move_vertical(&mut self, distance: f32) {
         self.logical_y += distance;
+        //self.logical_y = (self.logical_y * 100.0).round() / 100.0;
     }
 
     pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Player) -> bool) -> bool {

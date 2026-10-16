@@ -56,6 +56,9 @@ impl ActiveGameWorld {
 
         draw_text(String::from("FPS: ") + &get_fps().to_string(), 20.0, 20.0, 30.0, DARKGRAY);
         draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);
+        draw_text(
+            String::from("player pos: ") + &self.player.current_x_y_position_center().0.to_string() + ", " + &self.player.current_x_y_position_center().1.to_string(), 
+            20.0, 150.0, 50.0, DARKGRAY);
         //draw_fps();
     }
 

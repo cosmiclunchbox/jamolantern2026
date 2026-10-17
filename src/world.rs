@@ -1,11 +1,12 @@
 use macroquad::prelude::*;
 
 use crate::GameSceneTransition;
-use crate::enemy::{Enemy, EnemyDecision, MoveDirection};
+use crate::enemy::{Enemy, EnemyDecision, EnemyType};
 use crate::level::{Level, TouchingLevelElement};
 use crate::player::Player;
 use crate::camera::GameCamera;
 use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::util::MoveDirection;
 
 pub struct ActiveGameWorld {
     level: Level,
@@ -39,7 +40,8 @@ impl ActiveGameWorld {
             0.0, 
             0.0, 
             level.width as f32, 
-            level.height as f32
+            level.height as f32,
+            EnemyType::Impatient
         );
         ActiveGameWorld {
             level,

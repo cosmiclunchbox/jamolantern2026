@@ -3,6 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::enemy::Enemy;
 use crate::level::{Level, LevelTileType};
+use crate::util::MoveDirection;
 
 #[derive(Debug)]
 pub struct EnemyPathfinding {
@@ -14,14 +15,6 @@ pub struct EnemyPathfinding {
     pub next_tile_index_y: i32, // adjacent to current tile
 }
 
-
-#[derive(Debug)]
-pub enum MoveDirection {
-    Up,
-    Down,
-    Left,
-    Right
-}
 
 #[derive(Debug)]
 pub enum EnemyDecision {

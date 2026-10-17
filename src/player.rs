@@ -5,7 +5,7 @@ use crate::hitbox::MayHaveHitbox;
 use crate::camera::GameCamera;
 
 use crate::constants::{FRICTION, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MOVEMENT_SPEED_THRESHOLD};
-use crate::util::get_tile_size;
+use crate::util::{MoveDirection, get_tile_size};
 use crate::iframe::IFrame;
 
 // x, y are position of TOP LEFT CORNER of player hitbox
@@ -19,7 +19,8 @@ pub struct Player {
     logical_x_velocity: f32,
     logical_y_velocity: f32,
     health: u32,
-    previous_iframe: Option<IFrame>
+    previous_iframe: Option<IFrame>,
+    //facing: MoveDirection
 }
 
 impl Player {

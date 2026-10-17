@@ -11,13 +11,14 @@ use crate::level::Level;
 
 use crate::player::Player;
 
-use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MOVEMENT_SPEED, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
-use crate::util::get_tile_size;
+use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_DETECTION_RADIUS, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION, ENEMY_MIN_ANGER_DISTANCE};
+use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
 use crate::iframe::IFrame;
 
 use enemy_ai::EnemyPathfinding;
 
-pub use enemy_ai::{EnemyDecision, MoveDirection};
+pub use enemy_ai::{EnemyDecision};
+pub use enemy_anger::{EnemyAngerLevel, EnemyType};
 
 // x, y are position of TOP LEFT CORNER of enemy hitbox
 #[derive(Debug)]
@@ -32,11 +33,13 @@ pub struct Enemy {
     logical_y_velocity: f32,
     health: u32,
     previous_iframe: Option<IFrame>,
-    controller: EnemyPathfinding
+    controller: EnemyPathfinding,
+    disposition: EnemyType,
+    anger_level: EnemyAngerLevel
 }
 
 impl Enemy {
-    pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32) -> Enemy {
+    pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32, personality: EnemyType) -> Enemy {
         Enemy {
             logical_x: spawn_x,
             logical_y: spawn_y,
@@ -48,7 +51,9 @@ impl Enemy {
             logical_y_velocity: 0.0,
             health: ENEMY_MAX_HEALTH,
             previous_iframe: None,
-            controller: EnemyPathfinding::at_position(spawn_x, spawn_y)
+            controller: EnemyPathfinding::at_position(spawn_x, spawn_y),
+            disposition: personality,
+            anger_level: EnemyAngerLevel::Neutral
         }
     }
 
@@ -187,13 +192,55 @@ impl Enemy {
     }
 
     pub fn decide_next_action(&mut self, level: &Level, player: &Player) -> EnemyDecision {
-        self.controller.update_current_enemy_center_position(
-            self.logical_x + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5,
-            self.logical_y + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5
+        // yes this should probably be split into multiple functions I know
+
+        let (neutral_to_alert, alert_to_neutral, alert_to_angry) = match &self.disposition {
+            EnemyType::Neutral => {
+                (
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) < ENEMY_DETECTION_RADIUS,
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) >= ENEMY_DETECTION_RADIUS,
+                    false
+                )
+            },
+            EnemyType::Impatient => {
+                (
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) < ENEMY_DETECTION_RADIUS,
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) >= ENEMY_DETECTION_RADIUS,
+                    player.current_x_y_position_center().0 > self.current_x_y_position_center().0 + ENEMY_MIN_ANGER_DISTANCE
+                )
+            },
+        };
+
+        self.anger_level = self.anger_level.transition(
+            neutral_to_alert,
+            alert_to_neutral,
+            alert_to_angry
         );
-        let (player_x, player_y) = player.current_x_y_position_center();
-        self.controller.set_target_location(player_x, player_y);
-        self.controller.get_next_enemy_direction_in_level(level)
+
+        match &self.anger_level {
+            EnemyAngerLevel::Angry => {
+                self.controller.update_current_enemy_center_position(
+                    self.logical_x + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5,
+                    self.logical_y + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5
+                );
+                let (player_x, player_y) = player.current_x_y_position_center();
+                self.controller.set_target_location(player_x, player_y);
+                self.controller.get_next_enemy_direction_in_level(level)
+            },
+            _ => EnemyDecision::StayStill
+        }
     }
 }
 

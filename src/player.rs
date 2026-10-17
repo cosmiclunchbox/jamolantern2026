@@ -20,7 +20,7 @@ pub struct Player {
     logical_y_velocity: f32,
     health: u32,
     previous_iframe: Option<IFrame>,
-    //facing: MoveDirection
+    facing: MoveDirection
 }
 
 impl Player {
@@ -35,7 +35,8 @@ impl Player {
             logical_x_velocity: 0.0,
             logical_y_velocity: 0.0,
             health: PLAYER_MAX_HEALTH,
-            previous_iframe: None
+            previous_iframe: None,
+            facing: MoveDirection::Right
         }
     }
 
@@ -48,6 +49,20 @@ impl Player {
             Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKGRAY } else { BLACK }
         };
         draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
+        match self.facing {
+            MoveDirection::Up => {
+                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_width * 0.25, player_width * 0.2, YELLOW);
+            },
+            MoveDirection::Down => {
+                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_width * 0.75, player_width * 0.2, YELLOW);
+            }
+            MoveDirection::Left => {
+                draw_circle(top_left_x + player_width * 0.25, top_left_y + player_width * 0.5, player_width * 0.2, YELLOW);
+            },
+            MoveDirection::Right => {
+                draw_circle(top_left_x + player_width * 0.75, top_left_y + player_width * 0.5, player_width * 0.2, YELLOW);
+            },
+        }
     }
 
     pub fn current_x_y_position_top_left(&self) -> (f32, f32) {
@@ -56,6 +71,14 @@ impl Player {
 
     pub fn current_x_y_position_center(&self) -> (f32, f32) {
         (self.logical_x + PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE / 2.0, self.logical_y + PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE / 2.0)
+    }
+
+    pub fn current_facing_direction(&self) -> MoveDirection {
+        self.facing.clone()
+    }
+
+    fn face_direction(&mut self, direction: MoveDirection) {
+        self.facing = direction;
     }
 
     fn clamp_player_position(&mut self) {
@@ -71,6 +94,18 @@ impl Player {
     fn move_vertical(&mut self, distance: f32) {
         self.logical_y += distance;
         //self.logical_y = (self.logical_y * 100.0).round() / 100.0;
+    }
+
+    pub fn set_direction_based_on_velocity(&mut self) {
+        if self.logical_x_velocity > 0.0 {
+            self.face_direction(MoveDirection::Right);
+        } else if self.logical_x_velocity < 0.0 {
+            self.face_direction(MoveDirection::Left);
+        } else if self.logical_y_velocity > 0.0 {
+            self.face_direction(MoveDirection::Down);
+        } else if self.logical_y_velocity < 0.0 {
+            self.face_direction(MoveDirection::Up);
+        }
     }
 
     pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Player) -> bool) -> bool {

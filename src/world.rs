@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use macroquad::prelude::*;
+use macroquad::ui::KeyCode::Control;
 
 use crate::GameSceneTransition;
 use crate::enemy::{Enemy, EnemyDecision, EnemyType};
@@ -12,7 +15,8 @@ pub struct ActiveGameWorld {
     level: Level,
     camera: GameCamera,
     player: Player,
-    enemy: Enemy
+    enemy: Enemy,
+    context: ControlContext
 }
 
 impl ActiveGameWorld {
@@ -43,11 +47,13 @@ impl ActiveGameWorld {
             level.height as f32,
             EnemyType::Impatient
         );
+        let context = ControlContext::new();
         ActiveGameWorld {
             level,
             camera,
             player,
-            enemy
+            enemy,
+            context
         }
     }
 
@@ -80,27 +86,48 @@ impl ActiveGameWorld {
             !colliding_ground_tiles.is_empty()
         };
 
-        let player_x_acceleration = PLAYER_MOVEMENT_SPEED * delta_time * (
-            (is_key_down(KeyCode::Right) as i32) as f32 - (is_key_down(KeyCode::Left) as i32) as f32
+        let mut player_x_acceleration = 0.0;
+        let mut player_y_acceleration = 0.0;
+
+        self.context.do_on_key_press(
+            KeyCode::Right,
+            || {},
+            || { player_x_acceleration = if is_key_down(KeyCode::Left) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
         );
-        let player_y_acceleration = PLAYER_MOVEMENT_SPEED * delta_time * (
-            (is_key_down(KeyCode::Down) as i32) as f32 - (is_key_down(KeyCode::Up) as i32) as f32
+        self.context.do_on_key_press(
+            KeyCode::Left,
+            || {},
+            || { player_x_acceleration = if is_key_down(KeyCode::Right) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
+        );
+        self.context.do_on_key_press(
+            KeyCode::Down,
+            || {},
+            || { player_y_acceleration = if is_key_down(KeyCode::Up) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
+        );
+        self.context.do_on_key_press(
+            KeyCode::Up,
+            || {},
+            || { player_y_acceleration = if is_key_down(KeyCode::Down) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
         );
         
         /*if is_key_down(KeyCode::Right) {
-            self.player.move_horizontal_clamped_check_collision(PLAYER_MOVEMENT_SPEED * delta_time, check_collision);
+            player_x_acceleration = PLAYER_MOVEMENT_SPEED * delta_time;
+            self.player.face_direction(MoveDirection::Right);
         }
 
         if is_key_down(KeyCode::Left) {
-            self.player.move_horizontal_clamped_check_collision(-PLAYER_MOVEMENT_SPEED * delta_time, check_collision);
+            player_x_acceleration = -PLAYER_MOVEMENT_SPEED * delta_time;
+            self.player.face_direction(MoveDirection::Left);
         }
 
         if is_key_down(KeyCode::Down) {
-            self.player.move_vertical_clamped_check_collision(PLAYER_MOVEMENT_SPEED * delta_time, check_collision);
+            player_y_acceleration = PLAYER_MOVEMENT_SPEED * delta_time;
+            self.player.face_direction(MoveDirection::Down);
         }
 
         if is_key_down(KeyCode::Up) {
-            self.player.move_vertical_clamped_check_collision(-PLAYER_MOVEMENT_SPEED * delta_time, check_collision);
+            player_y_acceleration = -PLAYER_MOVEMENT_SPEED * delta_time;
+            self.player.face_direction(MoveDirection::Up);
         }*/
 
         self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
@@ -114,6 +141,8 @@ impl ActiveGameWorld {
             PLAYER_MOVEMENT_SPEED_THRESHOLD * delta_time,
             check_collision_with_solid_tiles
         );
+
+        self.player.set_direction_based_on_velocity();
 
         let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
             false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
@@ -173,5 +202,44 @@ impl ActiveGameWorld {
         self.camera.track_target_position_clamped(player_x, player_y);
 
         return GameSceneTransition::Continue;
+    }
+}
+
+
+struct ControlContext {
+    keys_pressed_down: HashMap<KeyCode, bool>
+}
+
+impl ControlContext {
+    fn new() -> ControlContext {
+        let mut keys_pressed_down = HashMap::new();
+        keys_pressed_down.insert(KeyCode::Right, false);
+        keys_pressed_down.insert(KeyCode::Left, false);
+        keys_pressed_down.insert(KeyCode::Up, false);
+        keys_pressed_down.insert(KeyCode::Down, false);
+        ControlContext {
+            keys_pressed_down
+        }
+    }
+
+    fn do_on_key_press(
+        &mut self, 
+        key: KeyCode, 
+        mut when_first_pressed: impl FnMut() -> (),
+        mut when_held: impl FnMut() -> ()
+    ) {
+        if is_key_down(key) {
+            let Some(is_pressed) = self.keys_pressed_down.get(&key) else {
+                panic!("attempted to check for key press that is not stored in context 2shkldsfl");
+                return
+            };
+            if !is_pressed {
+                when_first_pressed();
+                self.keys_pressed_down.insert(key.clone(), true);
+            }
+            when_held();
+        } else {
+            self.keys_pressed_down.insert(key.clone(), false);
+        }
     }
 }

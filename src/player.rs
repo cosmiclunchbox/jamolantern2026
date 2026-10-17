@@ -4,7 +4,7 @@ use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
-use crate::constants::{FRICTION, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::constants::{PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::living_entity::Entity;
 use crate::util::{MoveDirection, get_tile_size};
 use crate::iframe::IFrame;

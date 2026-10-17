@@ -3,7 +3,7 @@ use crate::camera::GameCamera;
 use crate::util::get_tile_size;
 use crate::hitbox::MayHaveHitbox;
 
-const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
+//const BACKGROUND_COLOR: Color = Color::from_rgba(200, 240, 255, 255);
 
 #[derive(Clone, Debug)]
 pub enum LevelTileType {

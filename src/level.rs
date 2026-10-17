@@ -2,13 +2,10 @@ mod level_tile;
 
 pub use level_tile::LevelTile;
 
-use ndarray::Array2;
 use macroquad::prelude::*;
 use std::collections::HashMap;
-use std::f32::consts::E;
 use std::fs;
 
-use crate::constants::NUM_TILES_PER_SCREEN_WIDTH;
 use crate::camera::GameCamera;
 use crate::hitbox::MayHaveHitbox;
 pub use crate::level::level_tile::LevelTileType;

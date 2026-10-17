@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use crate::hitbox::MayHaveHitbox;
 
-use crate::constants::{FRICTION, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::constants::{FRICTION};
 use crate::util::{MoveDirection};
 
 

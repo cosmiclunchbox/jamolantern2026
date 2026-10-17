@@ -3,7 +3,9 @@ use macroquad::prelude::*;
 use crate::hitbox::MayHaveHitbox;
 
 use crate::constants::{FRICTION};
+use crate::iframe::IFrame;
 use crate::util::{MoveDirection};
+use crate::knockback_manager::Knockback;
 
 
 // x, y are position of TOP LEFT CORNER of entity hitbox
@@ -18,11 +20,23 @@ pub struct Entity {
     br_logical_y_bound: f32,
     logical_x_velocity: f32,
     logical_y_velocity: f32,
-    facing: MoveDirection
+    facing: MoveDirection,
+    health: u32,
+    previous_iframe: Option<IFrame>,
 }
 
 impl Entity {
-    pub fn new(spawn_x: f32, spawn_y: f32, hitbox_width: f32, hitbox_height: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32) -> Entity {
+    pub fn new(
+        spawn_x: f32, 
+        spawn_y: f32, 
+        hitbox_width: f32, 
+        hitbox_height: f32, 
+        leftmost_x: f32, 
+        upmost_y: f32, 
+        rightmost_x: f32, 
+        downmost_y: f32,
+        total_health: u32,
+    ) -> Entity {
         Entity {
             logical_x: spawn_x,
             logical_y: spawn_y,
@@ -34,7 +48,9 @@ impl Entity {
             br_logical_y_bound: downmost_y,
             logical_x_velocity: 0.0,
             logical_y_velocity: 0.0,
-            facing: MoveDirection::Right
+            facing: MoveDirection::Right,
+            health: total_health,
+            previous_iframe: None
         }
     }
 
@@ -155,6 +171,51 @@ impl Entity {
             self.set_vertical_velocity(0.0);
         }
         colliding
+    }
+
+    pub fn get_current_health(&self) -> u32 {
+        self.health
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.health == 0
+    }
+
+    fn take_damage(&mut self) {
+        self.health -= 1;
+        self.previous_iframe = Some(IFrame::new());
+    }
+
+    pub fn is_taking_damage(&self) -> bool {
+        match &self.previous_iframe {
+            None => false,
+            Some(iframe) => iframe.is_during_damage_tick()
+        }
+    }
+
+    pub fn can_take_damage(&self) -> bool {
+        match &self.previous_iframe {
+            None => true,
+            Some(iframe) => iframe.is_expired()
+        }
+    }
+
+    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+        if self.can_take_damage() {
+            self.take_damage();
+            if let Some(knockback) = knockback {
+                self.take_knockback_set_velocity(knockback.direction, knockback.amount);
+            }
+        }
+    }
+
+    fn take_knockback_set_velocity(&mut self, damage_direction: MoveDirection, knockback_amount: f32) {
+        match damage_direction {
+            MoveDirection::Up => self.change_vertical_velocity_with_friction(-knockback_amount),
+            MoveDirection::Down => self.change_vertical_velocity_with_friction(knockback_amount),
+            MoveDirection::Left => self.change_horizontal_velocity_with_friction(-knockback_amount),
+            MoveDirection::Right => self.change_horizontal_velocity_with_friction(knockback_amount),
+        }
     }
 }
 

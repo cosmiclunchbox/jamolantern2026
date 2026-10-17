@@ -5,15 +5,13 @@ use crate::hitbox::MayHaveHitbox;
 use crate::camera::GameCamera;
 
 use crate::constants::{PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
-use crate::living_entity::Entity;
+use crate::living_entity::{Entity};
+use crate::knockback_manager::Knockback;
 use crate::util::{MoveDirection, get_tile_size};
-use crate::iframe::IFrame;
 
 // x, y are position of TOP LEFT CORNER of player hitbox
 pub struct Player {
-    player_entity: Entity,
-    health: u32,
-    previous_iframe: Option<IFrame>
+    player_entity: Entity
 }
 
 impl Player {
@@ -27,10 +25,9 @@ impl Player {
                 leftmost_x,
                 upmost_y,
                 rightmost_x,
-                downmost_y
-            ),
-            health: PLAYER_MAX_HEALTH,
-            previous_iframe: None
+                downmost_y,
+                PLAYER_MAX_HEALTH
+            )
         }
     }
 
@@ -39,9 +36,12 @@ impl Player {
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let player_width = PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let player_height = PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
-        let player_color = match &self.previous_iframe {
-            None => BLACK,
-            Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKGRAY } else { BLACK }
+        let player_color = if self.is_taking_damage() {
+            MAROON
+        } else if !self.can_take_damage() {
+            DARKGRAY
+        } else {
+            BLACK
         };
         draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
         match self.current_facing_direction() {
@@ -105,27 +105,23 @@ impl Player {
     }
 
     pub fn get_current_health(&self) -> u32 {
-        self.health
+        self.player_entity.get_current_health()
     }
 
     pub fn is_dead(&self) -> bool {
-        self.health == 0
+        self.player_entity.is_dead()
     }
 
-    fn take_damage(&mut self) {
-        self.health -= 1;
-        self.previous_iframe = Some(IFrame::new());
+    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+        self.player_entity.take_damage_if_not_iframe(knockback);
     }
 
-    pub fn take_damage_if_not_iframe(&mut self) {
-        match &self.previous_iframe {
-            None => self.take_damage(),
-            Some(iframe) => {
-                if iframe.is_expired() {
-                    self.take_damage()
-                }
-            }
-        }
+    pub fn is_taking_damage(&self) -> bool {
+        self.player_entity.is_taking_damage()
+    }
+
+    pub fn can_take_damage(&self) -> bool {
+        self.player_entity.can_take_damage()
     }
 }
 

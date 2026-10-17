@@ -7,10 +7,11 @@ use crate::GameSceneTransition;
 use crate::enemy::{Enemy, EnemyDecision, EnemyType};
 use crate::hitbox::MayHaveHitbox;
 use crate::level::{Level, TouchingLevelElement};
-use crate::living_entity::Entity;
+use crate::living_entity::{Entity};
+use crate::knockback_manager::Knockback;
 use crate::player::Player;
 use crate::camera::GameCamera;
-use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
 use crate::util::MoveDirection;
 
 pub struct ActiveGameWorld {
@@ -77,7 +78,7 @@ impl ActiveGameWorld {
     }
 
     pub fn update_on_each_frame(&mut self) -> GameSceneTransition {
-        let delta_time = get_frame_time();
+        let delta_time = get_frame_time().min(1.0 / 30.0);
 
         // check collision with solids function
         let check_collision_with_solid_tiles = |e: &Entity| {
@@ -150,7 +151,8 @@ impl ActiveGameWorld {
             false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
         );
         if is_player_touching_danger_tile {
-            self.player.take_damage_if_not_iframe();
+            let knockback = Knockback::new(self.player.current_facing_direction().opposite(), KNOCKBACK_AMOUNT * delta_time);
+            self.player.take_damage_if_not_iframe(Some(knockback));
         }
         if self.player.is_dead() {
             return GameSceneTransition::ToLoseScene;
@@ -166,6 +168,11 @@ impl ActiveGameWorld {
                 self.enemy.change_vertical_velocity_with_friction(0.0);
                 self.enemy.change_horizontal_velocity_with_friction(0.0);
             },
+            EnemyDecision::AttackPlayer => {
+                self.enemy.attack_player_if_in_range_and_not_in_cooldown(&mut self.player, KNOCKBACK_AMOUNT * delta_time);
+                self.enemy.change_vertical_velocity_with_friction(0.0);
+                self.enemy.change_horizontal_velocity_with_friction(0.0);
+            }
             EnemyDecision::Move(MoveDirection::Up) => {
                 self.enemy.change_vertical_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
                 self.enemy.change_horizontal_velocity_with_friction(0.0);

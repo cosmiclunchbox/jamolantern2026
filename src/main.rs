@@ -6,6 +6,8 @@ mod iframe;
 mod living_entity;
 mod player;
 mod enemy;
+mod attack_manager;
+mod knockback_manager;
 mod camera;
 mod constants;
 mod world;

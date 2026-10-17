@@ -13,7 +13,7 @@ impl IFrame {
         let damage_tick_ends_at = Timestamp::now().checked_add(
             SignedDuration::milliseconds(IFRAME_VISUAL_DAMAGE_TICK_LENGTH_MS as i64)
         ).expect("I'm gonna just assume the timestamp add should work lol");
-        let expires_at = Timestamp::now().checked_add(
+        let expires_at: Timestamp = Timestamp::now().checked_add(
             SignedDuration::milliseconds(IFRAME_DURATION_MS as i64)
         ).expect("I'm gonna just assume the timestamp add should work lol");
         IFrame {

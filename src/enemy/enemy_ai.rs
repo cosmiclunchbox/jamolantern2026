@@ -6,7 +6,7 @@ use crate::level::{Level, LevelTileType};
 use crate::util::MoveDirection;
 
 #[derive(Debug)]
-pub struct EnemyPathfinding {
+pub struct EnemyAngryAI {
     enemy_center_logical_x: f32,
     enemy_center_logical_y: f32,
     destination_x: f32,
@@ -18,6 +18,7 @@ pub struct EnemyPathfinding {
 
 #[derive(Debug)]
 pub enum EnemyDecision {
+    AttackPlayer,
     StayStill,
     Move(MoveDirection)
 }
@@ -30,10 +31,10 @@ enum AlignmentRelativeToTile {
     TooFarDown
 }
 
-impl EnemyPathfinding {
-    pub fn at_position(spawn_x: f32, spawn_y: f32) -> EnemyPathfinding {
-        let (next_tile_index_x, next_tile_index_y) = EnemyPathfinding::coordinates_to_tile_index(spawn_x, spawn_y);
-        EnemyPathfinding {
+impl EnemyAngryAI {
+    pub fn at_position(spawn_x: f32, spawn_y: f32) -> EnemyAngryAI {
+        let (next_tile_index_x, next_tile_index_y) = EnemyAngryAI::coordinates_to_tile_index(spawn_x, spawn_y);
+        EnemyAngryAI {
             enemy_center_logical_x: spawn_x,
             enemy_center_logical_y: spawn_y,
             destination_x: spawn_x,
@@ -48,7 +49,7 @@ impl EnemyPathfinding {
     }
 
     fn current_enemy_coordinates_to_tile_index(&self) -> (i32, i32) {
-        EnemyPathfinding::coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y)
+        EnemyAngryAI::coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y)
     }
 
     fn current_alignment_relative_to_next_tile_position(&self) -> AlignmentRelativeToTile {
@@ -78,12 +79,12 @@ impl EnemyPathfinding {
         self.destination_y = y;
     }
 
-    pub fn get_next_enemy_direction_in_level(&mut self, level: &Level) -> EnemyDecision {
+    pub fn get_next_enemy_decision_in_level(&mut self, level: &Level) -> EnemyDecision {
         let current_pos = self.current_enemy_coordinates_to_tile_index();
-        let target_pos = EnemyPathfinding::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        let target_pos = EnemyAngryAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
         if current_pos == target_pos {
             println!("YESSIR GOTEM");
-            return EnemyDecision::StayStill;
+            return EnemyDecision::AttackPlayer;
         }
 
         let alignment_relative_to_next_tile = self.current_alignment_relative_to_next_tile_position();
@@ -143,7 +144,7 @@ impl EnemyPathfinding {
 
     fn set_next_tile_and_determine_next_move_direction_based_on_target_location(&mut self, level: &Level) -> EnemyDecision {
         let current_pos = self.current_enemy_coordinates_to_tile_index();
-        let target_pos = EnemyPathfinding::coordinates_to_tile_index(self.destination_x, self.destination_y);
+        let target_pos = EnemyAngryAI::coordinates_to_tile_index(self.destination_x, self.destination_y);
 
         let Some(mut node_parents) = self.run_bfs(
             level, 

@@ -20,3 +20,14 @@ pub enum MoveDirection {
     Left,
     Right
 }
+
+impl MoveDirection {
+    pub fn opposite(&self) -> MoveDirection {
+        match self {
+            MoveDirection::Up => MoveDirection::Down,
+            MoveDirection::Down => MoveDirection::Up,
+            MoveDirection::Left => MoveDirection::Right,
+            MoveDirection::Right => MoveDirection::Left,
+        }
+    }
+}

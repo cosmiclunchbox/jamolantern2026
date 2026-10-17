@@ -4,20 +4,22 @@ mod enemy_anger;
 use macroquad::miniquad::gl::GL_RED;
 use macroquad::prelude::*;
 
+use crate::attack_manager::AttackManager;
 use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
 use crate::level::Level;
 
-use crate::living_entity::Entity;
+use crate::living_entity::{Entity};
+use crate::knockback_manager::Knockback;
 use crate::player::Player;
 
-use crate::constants::{ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
+use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
 use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
 use crate::iframe::IFrame;
 
-use enemy_ai::EnemyPathfinding;
+use enemy_ai::EnemyAngryAI;
 
 pub use enemy_ai::{EnemyDecision};
 pub use enemy_anger::{EnemyAngerLevel, EnemyType};
@@ -26,11 +28,10 @@ pub use enemy_anger::{EnemyAngerLevel, EnemyType};
 
 pub struct Enemy {
     enemy_entity: Entity,
-    health: u32,
-    previous_iframe: Option<IFrame>,
-    controller: EnemyPathfinding,
+    controller: EnemyAngryAI,
     disposition: EnemyType,
-    anger_level: EnemyAngerLevel
+    anger_level: EnemyAngerLevel,
+    attack_manager: AttackManager
 }
 
 impl Enemy {
@@ -44,13 +45,13 @@ impl Enemy {
                 leftmost_x,
                 upmost_y,
                 rightmost_x,
-                downmost_y
+                downmost_y,
+                ENEMY_MAX_HEALTH
             ),
-            health: ENEMY_MAX_HEALTH,
-            previous_iframe: None,
-            controller: EnemyPathfinding::at_position(spawn_x, spawn_y),
+            controller: EnemyAngryAI::at_position(spawn_x, spawn_y),
             disposition: personality,
-            anger_level: EnemyAngerLevel::Neutral
+            anger_level: EnemyAngerLevel::Neutral,
+            attack_manager: AttackManager::new(ENEMY_ATTACK_COOLDOWN_MS)
         }
     }
 
@@ -59,11 +60,11 @@ impl Enemy {
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let enemy_width = ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_height = ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
-        let enemy_color = match (&self.previous_iframe, &self.anger_level) {
-            (None, EnemyAngerLevel::Alert) => DARKBLUE,
-            (None, _) => BLUE,
-            (Some(iframe), EnemyAngerLevel::Alert) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { DARKBLUE }
-            (Some(iframe), _) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { BLUE }
+        let enemy_color = match (self.is_taking_damage(), self.can_take_damage(), &self.anger_level) {
+            (true, _, _) => MAROON,
+            (false, false, _) => DARKBROWN,
+            (false, true, EnemyAngerLevel::Alert) => DARKBLUE,
+            (false, true, _) => BLUE
         };
         draw_rectangle(top_left_x, top_left_y, enemy_width, enemy_height, enemy_color);
         match self.current_facing_direction() {
@@ -130,27 +131,23 @@ impl Enemy {
     }
 
     pub fn get_current_health(&self) -> u32 {
-        self.health
+        self.enemy_entity.get_current_health()
     }
 
     pub fn is_dead(&self) -> bool {
-        self.health == 0
+        self.enemy_entity.is_dead()
     }
 
-    fn take_damage(&mut self) {
-        self.health -= 1;
-        self.previous_iframe = Some(IFrame::new());
+    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+        self.enemy_entity.take_damage_if_not_iframe(knockback);
     }
 
-    pub fn take_damage_if_not_iframe(&mut self) {
-        match &self.previous_iframe {
-            None => self.take_damage(),
-            Some(iframe) => {
-                if iframe.is_expired() {
-                    self.take_damage()
-                }
-            }
-        }
+    pub fn is_taking_damage(&self) -> bool {
+        self.enemy_entity.is_taking_damage()
+    }
+
+    pub fn can_take_damage(&self) -> bool {
+        self.enemy_entity.can_take_damage()
     }
 
     pub fn get_current_target(&self) -> (i32, i32) {
@@ -205,10 +202,24 @@ impl Enemy {
                 self.controller.update_current_enemy_center_position(logical_x, logical_y);
                 let (player_x, player_y) = player.current_x_y_position_center();
                 self.controller.set_target_location(player_x, player_y);
-                self.controller.get_next_enemy_direction_in_level(level)
+                self.controller.get_next_enemy_decision_in_level(level)
             },
             _ => EnemyDecision::StayStill
         }
+    }
+
+    pub fn attack_player_if_in_range_and_not_in_cooldown(&mut self, player: &mut Player, knockback_amount: f32) {
+        if get_dnd_distance(self.current_x_y_position_center(), player.current_x_y_position_center()) > ENEMY_ATTACK_REACH {
+            return;
+        }
+        if self.attack_manager.on_cooldown() {
+            return;
+        }
+        player.take_damage_if_not_iframe(
+            Some(
+                Knockback::new(self.current_facing_direction(), knockback_amount)
+            )
+        );
     }
 }
 

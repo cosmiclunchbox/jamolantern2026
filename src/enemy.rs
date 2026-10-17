@@ -13,7 +13,7 @@ use crate::level::Level;
 use crate::living_entity::Entity;
 use crate::player::Player;
 
-use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_DETECTION_RADIUS, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION, ENEMY_MIN_ANGER_DISTANCE};
+use crate::constants::{ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
 use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
 use crate::iframe::IFrame;
 
@@ -59,9 +59,11 @@ impl Enemy {
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let enemy_width = ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_height = ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
-        let enemy_color = match &self.previous_iframe {
-            None => BLUE,
-            Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { BLUE }
+        let enemy_color = match (&self.previous_iframe, &self.anger_level) {
+            (None, EnemyAngerLevel::Alert) => DARKBLUE,
+            (None, _) => BLUE,
+            (Some(iframe), EnemyAngerLevel::Alert) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { DARKBLUE }
+            (Some(iframe), _) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { BLUE }
         };
         draw_rectangle(top_left_x, top_left_y, enemy_width, enemy_height, enemy_color);
         match self.current_facing_direction() {
@@ -182,7 +184,11 @@ impl Enemy {
                         self.current_x_y_position_center(), 
                         player.current_x_y_position_center()
                     ) >= ENEMY_DETECTION_RADIUS,
-                    player.current_x_y_position_center().0 > self.current_x_y_position_center().0 + ENEMY_MIN_ANGER_DISTANCE
+                    (
+                        player.current_x_y_position_center().0 > self.current_x_y_position_center().0 + ENEMY_MIN_ANGER_DISTANCE &&
+                        player.current_x_y_position_center().1 < self.current_x_y_position_center().1 + ENEMY_CONSIDERS_IN_LINE_MARGIN &&
+                        player.current_x_y_position_center().1 > self.current_x_y_position_center().1 - ENEMY_CONSIDERS_IN_LINE_MARGIN
+                    )
                 )
             },
         };

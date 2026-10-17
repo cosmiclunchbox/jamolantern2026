@@ -1,6 +1,7 @@
 mod enemy_ai;
 mod enemy_anger;
 
+use macroquad::miniquad::gl::GL_RED;
 use macroquad::prelude::*;
 
 use crate::hitbox::MayHaveHitbox;
@@ -9,6 +10,7 @@ use crate::camera::GameCamera;
 
 use crate::level::Level;
 
+use crate::living_entity::Entity;
 use crate::player::Player;
 
 use crate::constants::{ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_DETECTION_RADIUS, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION, ENEMY_MIN_ANGER_DISTANCE};
@@ -21,16 +23,9 @@ pub use enemy_ai::{EnemyDecision};
 pub use enemy_anger::{EnemyAngerLevel, EnemyType};
 
 // x, y are position of TOP LEFT CORNER of enemy hitbox
-#[derive(Debug)]
+
 pub struct Enemy {
-    logical_x: f32,
-    logical_y: f32,
-    tl_logical_x_bound: f32,
-    tl_logical_y_bound: f32,
-    br_logical_x_bound: f32,
-    br_logical_y_bound: f32,
-    logical_x_velocity: f32,
-    logical_y_velocity: f32,
+    enemy_entity: Entity,
     health: u32,
     previous_iframe: Option<IFrame>,
     controller: EnemyPathfinding,
@@ -41,14 +36,16 @@ pub struct Enemy {
 impl Enemy {
     pub fn new(spawn_x: f32, spawn_y: f32, leftmost_x: f32, upmost_y: f32, rightmost_x: f32, downmost_y: f32, personality: EnemyType) -> Enemy {
         Enemy {
-            logical_x: spawn_x,
-            logical_y: spawn_y,
-            tl_logical_x_bound: leftmost_x,
-            tl_logical_y_bound: upmost_y,
-            br_logical_x_bound: rightmost_x,
-            br_logical_y_bound: downmost_y,
-            logical_x_velocity: 0.0,
-            logical_y_velocity: 0.0,
+            enemy_entity: Entity::new(
+                spawn_x,
+                spawn_y,
+                ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE,
+                ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE,
+                leftmost_x,
+                upmost_y,
+                rightmost_x,
+                downmost_y
+            ),
             health: ENEMY_MAX_HEALTH,
             previous_iframe: None,
             controller: EnemyPathfinding::at_position(spawn_x, spawn_y),
@@ -58,7 +55,8 @@ impl Enemy {
     }
 
     pub fn render(&self, camera: &GameCamera) {
-        let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(self.logical_x, self.logical_y);
+        let (logical_x, logical_y) = self.current_x_y_position_top_left();
+        let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let enemy_width = ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_height = ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
         let enemy_color = match &self.previous_iframe {
@@ -66,101 +64,67 @@ impl Enemy {
             Some(iframe) => if iframe.is_during_damage_tick() { MAROON } else if !iframe.is_expired() { DARKBROWN } else { BLUE }
         };
         draw_rectangle(top_left_x, top_left_y, enemy_width, enemy_height, enemy_color);
+        match self.current_facing_direction() {
+            MoveDirection::Up => {
+                draw_circle(top_left_x + enemy_width * 0.5, top_left_y + enemy_height * 0.25, enemy_width * 0.2, RED);
+            },
+            MoveDirection::Down => {
+                draw_circle(top_left_x + enemy_width * 0.5, top_left_y + enemy_height * 0.75, enemy_width * 0.2, RED);
+            }
+            MoveDirection::Left => {
+                draw_circle(top_left_x + enemy_width * 0.25, top_left_y + enemy_height * 0.5, enemy_width * 0.2, RED);
+            },
+            MoveDirection::Right => {
+                draw_circle(top_left_x + enemy_width * 0.75, top_left_y + enemy_height * 0.5, enemy_width * 0.2, RED);
+            },
+        }
     }
 
     pub fn current_x_y_position_top_left(&self) -> (f32, f32) {
-        (self.logical_x, self.logical_y)
+        self.enemy_entity.current_x_y_position_top_left()
     }
 
     pub fn current_x_y_position_center(&self) -> (f32, f32) {
-        (self.logical_x + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE / 2.0, self.logical_y + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE / 2.0)
+        self.enemy_entity.current_x_y_position_center()
     }
 
-    fn clamp_enemy_position(&mut self) {
-        self.logical_x = clamp(self.logical_x, self.tl_logical_x_bound, self.br_logical_x_bound - ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE);
-        self.logical_y = clamp(self.logical_y, self.tl_logical_y_bound, self.br_logical_y_bound - ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE);
+    pub fn current_facing_direction(&self) -> MoveDirection {
+        self.enemy_entity.current_facing_direction()
     }
 
-    fn move_horizontal(&mut self, distance: f32) {
-        self.logical_x += distance;
+    pub fn set_direction_based_on_velocity(&mut self) {
+        self.enemy_entity.set_direction_based_on_velocity();
     }
 
-    fn move_vertical(&mut self, distance: f32) {
-        self.logical_y += distance;
-    }
-
-    pub fn move_horizontal_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Enemy) -> bool) -> bool {
-        self.move_horizontal(distance);
-        let colliding = check_collision(self);
-        //println!("{}", colliding);
-        if colliding {
-            self.move_horizontal(-distance);
-        }
-        self.clamp_enemy_position();
-        colliding
-    }
-
-    pub fn move_vertical_clamped_check_collision(&mut self, distance: f32, check_collision: impl Fn(&Enemy) -> bool) -> bool {
-        self.move_vertical(distance);
-        let colliding = check_collision(self);
-        //println!("{}", colliding);
-        if colliding {
-            self.move_vertical(-distance);
-        }
-        self.clamp_enemy_position();
-        colliding
-    }
-
-
-    fn set_horizontal_velocity(&mut self, velocity: f32) {
-        self.logical_x_velocity = velocity;
-    }
-
-    fn set_vertical_velocity(&mut self, velocity: f32) {
-        self.logical_y_velocity = velocity;
+    pub fn get_current_velocity(&self) -> (f32, f32) {
+        self.enemy_entity.get_current_velocity()
     }
 
     pub fn change_horizontal_velocity_with_friction(&mut self, acceleration: f32) {
-        self.logical_x_velocity += acceleration;
-        self.logical_x_velocity *= FRICTION;
+        self.enemy_entity.change_horizontal_velocity_with_friction(acceleration);
     }
 
     pub fn change_vertical_velocity_with_friction(&mut self, acceleration: f32) {
-        self.logical_y_velocity += acceleration;
-        self.logical_y_velocity *= FRICTION;
+        self.enemy_entity.change_vertical_velocity_with_friction(acceleration);
     }
 
 
     pub fn move_horizontal_by_current_velocity_clamped_check_collision(
         &mut self, 
         velocity_threshold: f32,
-        check_collision: impl Fn(&Enemy) -> bool
+        check_collision: impl Fn(&Entity) -> bool
     ) -> bool {
         //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
-        if self.logical_x_velocity.abs() < velocity_threshold {
-            self.set_horizontal_velocity(0.0);
-        }
-        let colliding = self.move_horizontal_clamped_check_collision(self.logical_x_velocity, check_collision);
-        if colliding {
-            self.set_horizontal_velocity(0.0);
-        }
-        colliding
+        self.enemy_entity.move_horizontal_by_current_velocity_clamped_check_collision(velocity_threshold, check_collision)
     }
 
     pub fn move_vertical_by_current_velocity_clamped_check_collision(
         &mut self, 
         velocity_threshold: f32,
-        check_collision: impl Fn(&Enemy) -> bool
+        check_collision: impl Fn(&Entity) -> bool
     ) -> bool {
         //println!("{:?}", (self.logical_x_velocity, self.logical_y_velocity));
-        if self.logical_y_velocity.abs() < velocity_threshold {
-            self.set_vertical_velocity(0.0);
-        }
-        let colliding = self.move_vertical_clamped_check_collision(self.logical_y_velocity, check_collision);
-        if colliding {
-            self.set_vertical_velocity(0.0);
-        }
-        colliding
+        self.enemy_entity.move_vertical_by_current_velocity_clamped_check_collision(velocity_threshold, check_collision)
     }
 
     pub fn get_current_health(&self) -> u32 {
@@ -231,10 +195,8 @@ impl Enemy {
 
         match &self.anger_level {
             EnemyAngerLevel::Angry => {
-                self.controller.update_current_enemy_center_position(
-                    self.logical_x + ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * 0.5,
-                    self.logical_y + ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE * 0.5
-                );
+                let (logical_x, logical_y) = self.current_x_y_position_center();
+                self.controller.update_current_enemy_center_position(logical_x, logical_y);
                 let (player_x, player_y) = player.current_x_y_position_center();
                 self.controller.set_target_location(player_x, player_y);
                 self.controller.get_next_enemy_direction_in_level(level)
@@ -246,13 +208,6 @@ impl Enemy {
 
 impl MayHaveHitbox for Enemy {
     fn get_hitbox(&self) -> Option<Rect> {
-        Some(
-            Rect {
-                x: (self.logical_x * 100.).round() * 0.01,
-                y: (self.logical_y * 100.).round() * 0.01,
-                w: ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE,
-                h: ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE
-            }
-        )
+        self.enemy_entity.get_hitbox()
     }
 }

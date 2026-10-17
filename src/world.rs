@@ -183,7 +183,7 @@ impl ActiveGameWorld {
                 self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
             },
         }
-        let check_enemy_collision_with_solid_tiles = |e: &Enemy| {
+        let check_enemy_collision_with_solid_tiles = |e: &Entity| {
             let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(e);
             let colliding_ground_tiles = colliding_tiles.iter().filter(
                 |x| match x { TouchingLevelElement::Solid => true, _ => false }
@@ -199,6 +199,8 @@ impl ActiveGameWorld {
             ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
             check_enemy_collision_with_solid_tiles
         );
+
+        self.enemy.set_direction_based_on_velocity();
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

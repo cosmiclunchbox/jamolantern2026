@@ -46,16 +46,16 @@ impl Player {
         draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
         match self.current_facing_direction() {
             MoveDirection::Up => {
-                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_width * 0.25, player_width * 0.2, YELLOW);
+                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_height * 0.25, player_width * 0.2, YELLOW);
             },
             MoveDirection::Down => {
-                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_width * 0.75, player_width * 0.2, YELLOW);
+                draw_circle(top_left_x + player_width * 0.5, top_left_y + player_height * 0.75, player_width * 0.2, YELLOW);
             }
             MoveDirection::Left => {
-                draw_circle(top_left_x + player_width * 0.25, top_left_y + player_width * 0.5, player_width * 0.2, YELLOW);
+                draw_circle(top_left_x + player_width * 0.25, top_left_y + player_height * 0.5, player_width * 0.2, YELLOW);
             },
             MoveDirection::Right => {
-                draw_circle(top_left_x + player_width * 0.75, top_left_y + player_width * 0.5, player_width * 0.2, YELLOW);
+                draw_circle(top_left_x + player_width * 0.75, top_left_y + player_height * 0.5, player_width * 0.2, YELLOW);
             },
         }
     }

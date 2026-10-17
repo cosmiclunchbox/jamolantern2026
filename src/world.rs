@@ -5,7 +5,9 @@ use macroquad::ui::KeyCode::Control;
 
 use crate::GameSceneTransition;
 use crate::enemy::{Enemy, EnemyDecision, EnemyType};
+use crate::hitbox::MayHaveHitbox;
 use crate::level::{Level, TouchingLevelElement};
+use crate::living_entity::Entity;
 use crate::player::Player;
 use crate::camera::GameCamera;
 use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
@@ -78,8 +80,8 @@ impl ActiveGameWorld {
         let delta_time = get_frame_time();
 
         // check collision with solids function
-        let check_collision_with_solid_tiles = |p: &Player| {
-            let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(p);
+        let check_collision_with_solid_tiles = |e: &Entity| {
+            let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(e);
             let colliding_ground_tiles = colliding_tiles.iter().filter(
                 |x| match x { TouchingLevelElement::Solid => true, _ => false }
             ).collect::<Vec<_>>();

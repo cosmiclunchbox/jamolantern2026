@@ -3,6 +3,7 @@ use macroquad::prelude::*;
 mod level;
 mod hitbox;
 mod iframe;
+mod living_entity;
 mod player;
 mod enemy;
 mod camera;

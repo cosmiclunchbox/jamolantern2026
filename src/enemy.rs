@@ -220,6 +220,7 @@ impl Enemy {
                 Knockback::new(self.current_facing_direction(), knockback_amount)
             )
         );
+        self.attack_manager.start_cooldown()
     }
 }
 

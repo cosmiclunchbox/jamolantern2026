@@ -19,4 +19,8 @@ impl Knockback {
             expires_at
         }
     }
+
+    pub fn being_knocked_back(&self) -> bool {
+        Timestamp::now() <= self.expires_at
+    }
 }

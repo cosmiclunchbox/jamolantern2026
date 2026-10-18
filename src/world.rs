@@ -215,7 +215,9 @@ impl ActiveGameWorld {
             check_collision_with_solid_tiles
         );
 
-        self.enemy.set_direction_based_on_velocity();
+        if !self.enemy.being_knocked_back() {
+            self.enemy.set_direction_based_on_velocity();
+        }
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

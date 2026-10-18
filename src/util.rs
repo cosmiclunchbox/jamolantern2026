@@ -36,3 +36,7 @@ pub fn adjust_by_frame_rate(num: f32) -> f32 {
     let delta_time = get_frame_time().min(1.0 / 30.0);
     num * delta_time
 }
+
+pub fn coordinates_to_tile_index(x: f32, y: f32) -> (i32, i32) {
+    (x.trunc() as i32, y.trunc() as i32)
+}

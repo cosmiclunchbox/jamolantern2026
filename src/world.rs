@@ -163,53 +163,56 @@ impl ActiveGameWorld {
             return GameSceneTransition::ToLoseScene;
         }
 
-        // enemy ai (yes I know this hsould be its own function)
-        let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
-        //println!("{:?}", self.enemy.current_x_y_position_center());
-        //println!("{:?}", enemy_decision);
-        //println!("{:?}", (self.enemy.get_current_target()));
-        match enemy_decision {
-            EnemyDecision::StayStill => {
-                self.enemy.change_vertical_velocity_with_friction(0.0);
-                self.enemy.change_horizontal_velocity_with_friction(0.0);
-            },
-            EnemyDecision::AttackPlayer => {
-                self.enemy.attack_player_if_in_range_and_not_in_cooldown(&mut self.player, KNOCKBACK_AMOUNT * delta_time);
-                self.enemy.change_vertical_velocity_with_friction(0.0);
-                self.enemy.change_horizontal_velocity_with_friction(0.0);
+        self.context.do_on_key_press(
+            KeyCode::Space,
+            || { self.player.attack_enemy_if_in_range(&mut self.enemy, KNOCKBACK_AMOUNT * delta_time); },
+            || {}
+        );
+
+        if self.enemy.being_knocked_back() {
+            self.enemy.take_knockback();
+        } else {
+            // enemy ai (yes I know this hsould be its own function)
+            let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
+            //println!("{:?}", self.enemy.current_x_y_position_center());
+            //println!("{:?}", enemy_decision);
+            //println!("{:?}", (self.enemy.get_current_target()));
+            match enemy_decision {
+                EnemyDecision::StayStill => {
+                    self.enemy.change_vertical_velocity_with_friction(0.0);
+                    self.enemy.change_horizontal_velocity_with_friction(0.0);
+                },
+                EnemyDecision::AttackPlayer => {
+                    self.enemy.attack_player_if_in_range_and_not_in_cooldown(&mut self.player, KNOCKBACK_AMOUNT * delta_time);
+                    self.enemy.change_vertical_velocity_with_friction(0.0);
+                    self.enemy.change_horizontal_velocity_with_friction(0.0);
+                }
+                EnemyDecision::Move(MoveDirection::Up) => {
+                    self.enemy.change_vertical_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
+                    self.enemy.change_horizontal_velocity_with_friction(0.0);
+                },
+                EnemyDecision::Move(MoveDirection::Down) => {
+                    self.enemy.change_vertical_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
+                    self.enemy.change_horizontal_velocity_with_friction(0.0);
+                },
+                EnemyDecision::Move(MoveDirection::Left) => {
+                    self.enemy.change_vertical_velocity_with_friction(0.0);
+                    self.enemy.change_horizontal_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
+                },
+                EnemyDecision::Move(MoveDirection::Right) => {
+                    self.enemy.change_vertical_velocity_with_friction(0.0);
+                    self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
+                },
             }
-            EnemyDecision::Move(MoveDirection::Up) => {
-                self.enemy.change_vertical_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
-                self.enemy.change_horizontal_velocity_with_friction(0.0);
-            },
-            EnemyDecision::Move(MoveDirection::Down) => {
-                self.enemy.change_vertical_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
-                self.enemy.change_horizontal_velocity_with_friction(0.0);
-            },
-            EnemyDecision::Move(MoveDirection::Left) => {
-                self.enemy.change_vertical_velocity_with_friction(0.0);
-                self.enemy.change_horizontal_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
-            },
-            EnemyDecision::Move(MoveDirection::Right) => {
-                self.enemy.change_vertical_velocity_with_friction(0.0);
-                self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
-            },
         }
-        let check_enemy_collision_with_solid_tiles = |e: &Entity| {
-            let colliding_tiles = self.level.get_tiles_that_entity_is_colliding_with(e);
-            let colliding_ground_tiles = colliding_tiles.iter().filter(
-                |x| match x { TouchingLevelElement::Solid => true, _ => false }
-            ).collect::<Vec<_>>();
-            !colliding_ground_tiles.is_empty()
-        };
 
         self.enemy.move_horizontal_by_current_velocity_clamped_check_collision(
             ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
-            check_enemy_collision_with_solid_tiles
+            check_collision_with_solid_tiles
         );
         self.enemy.move_vertical_by_current_velocity_clamped_check_collision(
             ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
-            check_enemy_collision_with_solid_tiles
+            check_collision_with_solid_tiles
         );
 
         self.enemy.set_direction_based_on_velocity();

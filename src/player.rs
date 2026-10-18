@@ -1,17 +1,20 @@
 use macroquad::prelude::*;
 
+use crate::attack_manager::AttackManager;
+use crate::enemy::Enemy;
 use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
-use crate::constants::{PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::constants::{PLAYER_ATTACK_COOLDOWN_MS, PLAYER_ATTACK_WIDTH, PLAYER_ATTACK_REACH, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
-use crate::util::{MoveDirection, get_tile_size};
+use crate::util::{MoveDirection, coordinates_to_tile_index, get_tile_size};
 
 // x, y are position of TOP LEFT CORNER of player hitbox
 pub struct Player {
-    player_entity: Entity
+    player_entity: Entity,
+    attack_manager: AttackManager
 }
 
 impl Player {
@@ -27,7 +30,8 @@ impl Player {
                 rightmost_x,
                 downmost_y,
                 PLAYER_MAX_HEALTH
-            )
+            ),
+            attack_manager: AttackManager::new(PLAYER_ATTACK_COOLDOWN_MS)
         }
     }
 
@@ -130,6 +134,64 @@ impl Player {
 
     pub fn can_take_damage(&self) -> bool {
         self.player_entity.can_take_damage()
+    }
+
+    pub fn attack_enemy_if_in_range(&mut self, enemy: &mut Enemy, knockback_amount: f32) {
+        let (player_center_x, player_center_y) = self.current_x_y_position_center();
+        let (enemy_center_x, enemy_center_y) = enemy.current_x_y_position_center();
+        match self.current_facing_direction() {
+            MoveDirection::Up => {
+                if enemy_center_y > player_center_y { // below player
+                    return;
+                }
+                if enemy_center_y < player_center_y - PLAYER_ATTACK_REACH { // too far above player
+                    return;
+                }
+                if (enemy_center_x - player_center_x).abs() > PLAYER_ATTACK_WIDTH {
+                    return;
+                }
+            },
+            MoveDirection::Down => {
+                if enemy_center_y < player_center_y { // above player
+                    return;
+                }
+                if enemy_center_y > player_center_y + PLAYER_ATTACK_REACH { // too far below player
+                    return;
+                }
+                if (enemy_center_x - player_center_x).abs() > PLAYER_ATTACK_WIDTH {
+                    return;
+                }
+            },
+            MoveDirection::Left => {
+                if enemy_center_x > player_center_x {
+                    return;
+                }
+                if enemy_center_x < player_center_x - PLAYER_ATTACK_REACH {
+                    return;
+                }
+                if (enemy_center_y - player_center_y).abs() > PLAYER_ATTACK_WIDTH {
+                    return;
+                }
+            },
+            MoveDirection::Right => {
+                if enemy_center_x < player_center_x {
+                    return;
+                }
+                if enemy_center_x > player_center_x + PLAYER_ATTACK_REACH {
+                    return;
+                }
+                if (enemy_center_y - player_center_y).abs() > PLAYER_ATTACK_WIDTH {
+                    return;
+                }
+            },
+        }
+
+        enemy.take_damage_if_not_iframe(
+            Some(
+                Knockback::new(self.current_facing_direction(), knockback_amount)
+            )
+        );
+        self.attack_manager.start_cooldown()
     }
 }
 

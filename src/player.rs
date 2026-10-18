@@ -88,6 +88,10 @@ impl Player {
         self.player_entity.change_vertical_velocity_with_friction(acceleration);
     }
 
+    pub fn take_knockback(&mut self) {
+        self.player_entity.take_knockback()
+    }
+
     pub fn move_horizontal_by_current_velocity_clamped_check_collision(
         &mut self, 
         velocity_threshold: f32,
@@ -118,6 +122,10 @@ impl Player {
 
     pub fn is_taking_damage(&self) -> bool {
         self.player_entity.is_taking_damage()
+    }
+
+    pub fn being_knocked_back(&self) -> bool {
+        self.player_entity.being_knocked_back()
     }
 
     pub fn can_take_damage(&self) -> bool {

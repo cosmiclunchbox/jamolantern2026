@@ -133,26 +133,31 @@ impl ActiveGameWorld {
             self.player.face_direction(MoveDirection::Up);
         }*/
 
-        self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
+        if self.player.being_knocked_back() {
+            self.player.take_knockback();
+        } else {
+            self.player.change_horizontal_velocity_with_friction(player_x_acceleration);
+            self.player.change_vertical_velocity_with_friction(player_y_acceleration);
+        }
+
         self.player.move_horizontal_by_current_velocity_clamped_check_collision(
             PLAYER_MOVEMENT_SPEED_THRESHOLD * delta_time,
             check_collision_with_solid_tiles
         );
-
-        self.player.change_vertical_velocity_with_friction(player_y_acceleration);
         self.player.move_vertical_by_current_velocity_clamped_check_collision(
             PLAYER_MOVEMENT_SPEED_THRESHOLD * delta_time,
             check_collision_with_solid_tiles
         );
 
-        self.player.set_direction_based_on_velocity();
+        if !self.player.being_knocked_back() {
+            self.player.set_direction_based_on_velocity();
+        }
 
         let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
             false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
         );
         if is_player_touching_danger_tile {
-            let knockback = Knockback::new(self.player.current_facing_direction().opposite(), KNOCKBACK_AMOUNT * delta_time);
-            self.player.take_damage_if_not_iframe(Some(knockback));
+            self.player.take_damage_if_not_iframe(None);
         }
         if self.player.is_dead() {
             return GameSceneTransition::ToLoseScene;
@@ -161,7 +166,7 @@ impl ActiveGameWorld {
         // enemy ai (yes I know this hsould be its own function)
         let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
         //println!("{:?}", self.enemy.current_x_y_position_center());
-        println!("{:?}", enemy_decision);
+        //println!("{:?}", enemy_decision);
         //println!("{:?}", (self.enemy.get_current_target()));
         match enemy_decision {
             EnemyDecision::StayStill => {

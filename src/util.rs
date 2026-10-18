@@ -31,3 +31,8 @@ impl MoveDirection {
         }
     }
 }
+
+pub fn adjust_by_frame_rate(num: f32) -> f32 {
+    let delta_time = get_frame_time().min(1.0 / 30.0);
+    num * delta_time
+}

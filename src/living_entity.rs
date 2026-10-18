@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use crate::hitbox::MayHaveHitbox;
 
-use crate::constants::{FRICTION};
+use crate::constants::{FRICTION, KNOCKBACK_FRICTION};
 use crate::iframe::IFrame;
 use crate::util::{MoveDirection};
 use crate::knockback_manager::Knockback;
@@ -23,6 +23,7 @@ pub struct Entity {
     facing: MoveDirection,
     health: u32,
     previous_iframe: Option<IFrame>,
+    knockback_state: Option<Knockback>
 }
 
 impl Entity {
@@ -50,7 +51,8 @@ impl Entity {
             logical_y_velocity: 0.0,
             facing: MoveDirection::Right,
             health: total_health,
-            previous_iframe: None
+            previous_iframe: None,
+            knockback_state: None
         }
     }
 
@@ -142,6 +144,19 @@ impl Entity {
         self.logical_y_velocity *= FRICTION;
     }
 
+    fn change_knockback_horizontal_velocity_with_friction(&mut self, knockback_amount: f32, being_accelerated: bool) {
+        if being_accelerated {
+            self.logical_x_velocity += knockback_amount;
+        }
+        self.logical_x_velocity *= KNOCKBACK_FRICTION;
+    }
+
+    fn change_knockback_vertical_velocity_with_friction(&mut self, knockback_amount: f32, being_accelerated: bool) {
+        if being_accelerated {
+            self.logical_y_velocity += knockback_amount;
+        }
+        self.logical_y_velocity *= KNOCKBACK_FRICTION;
+    }
 
     pub fn move_horizontal_by_current_velocity_clamped_check_collision(
         &mut self, 
@@ -200,22 +215,37 @@ impl Entity {
         }
     }
 
+    pub fn being_knocked_back(&self) -> bool {
+        match &self.knockback_state {
+            None => false,
+            Some(knockback) => knockback.being_knocked_back()
+        }
+    }
+
     pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
         if self.can_take_damage() {
             self.take_damage();
             if let Some(knockback) = knockback {
-                self.take_knockback_set_velocity(knockback.direction, knockback.amount);
+                self.knockback_state = Some(knockback.clone());
+                //self.take_knockback_set_velocity(knockback.direction, knockback.amount);
             }
         }
     }
 
-    fn take_knockback_set_velocity(&mut self, damage_direction: MoveDirection, knockback_amount: f32) {
+    fn take_knockback_set_velocity(&mut self, damage_direction: MoveDirection, knockback_amount: f32, being_accelerated: bool) {
         match damage_direction {
-            MoveDirection::Up => self.change_vertical_velocity_with_friction(-knockback_amount),
-            MoveDirection::Down => self.change_vertical_velocity_with_friction(knockback_amount),
-            MoveDirection::Left => self.change_horizontal_velocity_with_friction(-knockback_amount),
-            MoveDirection::Right => self.change_horizontal_velocity_with_friction(knockback_amount),
+            MoveDirection::Up => self.change_knockback_vertical_velocity_with_friction(-knockback_amount, being_accelerated),
+            MoveDirection::Down => self.change_knockback_vertical_velocity_with_friction(knockback_amount, being_accelerated),
+            MoveDirection::Left => self.change_knockback_horizontal_velocity_with_friction(-knockback_amount, being_accelerated),
+            MoveDirection::Right => self.change_knockback_horizontal_velocity_with_friction(knockback_amount, being_accelerated),
         }
+    }
+
+    pub fn take_knockback(&mut self) {
+        let Some(knockback) = &self.knockback_state else {
+            return;
+        };
+        self.take_knockback_set_velocity(knockback.direction.clone(), knockback.amount, knockback.being_accelerated_backwards());
     }
 }
 

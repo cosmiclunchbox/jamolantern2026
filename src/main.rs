@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 mod level;
+mod level_enemies;
 mod hitbox;
 mod iframe;
 mod living_entity;

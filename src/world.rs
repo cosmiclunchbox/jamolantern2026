@@ -7,18 +7,20 @@ use crate::GameSceneTransition;
 use crate::enemy::{Enemy, EnemyDecision, EnemyType};
 use crate::hitbox::MayHaveHitbox;
 use crate::level::{Level, TouchingLevelElement};
+use crate::level_enemies::EnemyLayout;
 use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
 use crate::player::Player;
 use crate::camera::GameCamera;
-use crate::constants::{ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::constants::{ENEMIES_FILE_PATH, ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
 use crate::util::MoveDirection;
 
 pub struct ActiveGameWorld {
     level: Level,
     camera: GameCamera,
     player: Player,
-    enemy: Enemy,
+    //enemy: Enemy,
+    enemies: EnemyLayout,
     context: ControlContext
 }
 
@@ -41,21 +43,17 @@ impl ActiveGameWorld {
             level.width as f32, 
             level.height as f32
         );
-        let enemy = Enemy::new(
-            15.0,
-            1.0,
-            0.0, 
-            0.0, 
-            level.width as f32, 
-            level.height as f32,
-            EnemyType::Impatient
+        let enemies = EnemyLayout::from_enemy_file_with_level_dimensions(
+            ENEMIES_FILE_PATH,
+            level.width as f32,
+            level.height as f32
         );
         let context = ControlContext::new();
         ActiveGameWorld {
             level,
             camera,
             player,
-            enemy,
+            enemies,
             context
         }
     }
@@ -63,7 +61,7 @@ impl ActiveGameWorld {
     pub fn render(&self) {
         self.level.render(&self.camera);
         self.player.render(&self.camera);
-        self.enemy.render(&self.camera);
+        self.enemies.render_all(&self.camera);
 
         draw_text(String::from("FPS: ") + &get_fps().to_string(), 20.0, 20.0, 30.0, DARKGRAY);
         draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);
@@ -166,68 +164,23 @@ impl ActiveGameWorld {
 
         self.context.do_on_key_press(
             KeyCode::Space,
-            || { self.player.attack_enemy_if_in_range(&mut self.enemy, KNOCKBACK_AMOUNT * delta_time); },
+            || { self.player.attack_enemies_if_in_range(&mut self.enemies, KNOCKBACK_AMOUNT * delta_time); },
             || {}
         );
 
-        if self.enemy.being_knocked_back() {
-            self.enemy.take_knockback();
-
-        } else if self.enemy.is_hesitating() {
-            self.enemy.change_vertical_velocity_with_friction(0.0);
-            self.enemy.change_horizontal_velocity_with_friction(0.0);
-
-        } else {
-            // enemy ai (yes I know this hsould be its own function)
-            let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
-            //println!("{:?}", self.enemy.current_x_y_position_center());
-            //println!("{:?}", enemy_decision);
-            //println!("{:?}", (self.enemy.get_current_target()));
-            match enemy_decision {
-                EnemyDecision::StayStill => {
-                    self.enemy.change_vertical_velocity_with_friction(0.0);
-                    self.enemy.change_horizontal_velocity_with_friction(0.0);
-                },
-                EnemyDecision::AttackPlayer => {
-                    self.enemy.attack_player_if_in_range_and_not_in_cooldown(&mut self.player, KNOCKBACK_AMOUNT * delta_time);
-                    self.enemy.change_vertical_velocity_with_friction(0.0);
-                    self.enemy.change_horizontal_velocity_with_friction(0.0);
-                }
-                EnemyDecision::Move(MoveDirection::Up) => {
-                    self.enemy.change_vertical_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
-                    self.enemy.change_horizontal_velocity_with_friction(0.0);
-                },
-                EnemyDecision::Move(MoveDirection::Down) => {
-                    self.enemy.change_vertical_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
-                    self.enemy.change_horizontal_velocity_with_friction(0.0);
-                },
-                EnemyDecision::Move(MoveDirection::Left) => {
-                    self.enemy.change_vertical_velocity_with_friction(0.0);
-                    self.enemy.change_horizontal_velocity_with_friction(-ENEMY_MOVEMENT_SPEED * delta_time);
-                },
-                EnemyDecision::Move(MoveDirection::Right) => {
-                    self.enemy.change_vertical_velocity_with_friction(0.0);
-                    self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
-                },
-            }
-
-            self.enemy.randomly_hesitate_if_changing_direction_while_moving(enemy_decision);
-        }
-
-        self.enemy.move_horizontal_by_current_velocity_clamped_check_collision(
-            ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
-            check_collision_with_solid_tiles
-        );
-        self.enemy.move_vertical_by_current_velocity_clamped_check_collision(
-            ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
-            check_collision_with_solid_tiles
+        self.enemies.make_each_enemy_act_based_on_current_world_state(
+            &self.level, 
+            &mut self.player, 
+            ENEMY_MOVEMENT_SPEED * delta_time,
+            KNOCKBACK_AMOUNT * delta_time
         );
 
-        if !self.enemy.being_knocked_back() {
-            self.enemy.set_direction_based_on_velocity();
-        }
+        self.enemies.adjust_all_enemy_positions_by_their_current_velocities_with_collision(
+            ENEMY_MOVEMENT_SPEED_THRESHOLD * delta_time,
+            &check_collision_with_solid_tiles
+        );
 
-        self.enemy.take_damage_if_condition_and_not_iframe(None, is_touching_danger_tile);
+        self.enemies.damage_each_enemy_if_condition_and_not_iframe(None, &is_touching_danger_tile);
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

@@ -4,6 +4,16 @@ pub enum EnemyType {
     Impatient
 }
 
+impl EnemyType {
+    pub fn from_numeric_id(id: u32) -> EnemyType {
+        match id {
+            0 => EnemyType::Idle,
+            1 => EnemyType::Impatient,
+            _ => panic!("Unrecognized enemy type id.")
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub enum EnemyAngerLevel {

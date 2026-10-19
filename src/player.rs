@@ -7,6 +7,7 @@ use crate::hitbox::MayHaveHitbox;
 use crate::camera::GameCamera;
 
 use crate::constants::{PLAYER_ATTACK_COOLDOWN_MS, PLAYER_ATTACK_WIDTH, PLAYER_ATTACK_REACH, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::level_enemies::EnemyLayout;
 use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
 use crate::util::{MoveDirection, coordinates_to_tile_index, get_tile_size};
@@ -203,6 +204,13 @@ impl Player {
             |_: &Entity| true
         );
         self.attack_manager.start_cooldown()
+    }
+
+    pub fn attack_enemies_if_in_range(&mut self, enemies: &mut EnemyLayout, knockback_amount: f32) {
+        let mut damage_each_enemy = |enemy: &mut Enemy| {
+            self.attack_enemy_if_in_range(enemy, knockback_amount);
+        };
+        enemies.do_action_to_all_enemies(&mut damage_each_enemy);
     }
 }
 

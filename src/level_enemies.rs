@@ -15,6 +15,12 @@ impl EnemyLayout {
 
         for enemy_row in enemies_str_rows {
             let enemy_row_items = enemy_row.split(" ").collect::<Vec<_>>();
+            if enemy_row_items.is_empty() {
+                continue;
+            }
+            if enemy_row_items.get(0).expect("non empty row").starts_with("//") {
+                continue;
+            }
             assert!(enemy_row_items.len() == 3);
             let enemy_x = enemy_row_items.get(0)
                 .expect("should be an x position for enemy")

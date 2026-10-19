@@ -147,52 +147,53 @@ impl Player {
         self.player_entity.can_take_damage()
     }
 
-    pub fn attack_enemy_if_in_range(&mut self, enemy: &mut Enemy, knockback_amount: f32) {
+    pub fn attack_enemy_if_in_range(&mut self, enemy: &mut Enemy, knockback_amount: f32) -> bool {
+        // returns whether the enemy was hit
         let (player_center_x, player_center_y) = self.current_x_y_position_center();
         let (enemy_center_x, enemy_center_y) = enemy.current_x_y_position_center();
         match self.current_facing_direction() {
             MoveDirection::Up => {
                 if enemy_center_y > player_center_y { // below player
-                    return;
+                    return false;
                 }
                 if enemy_center_y < player_center_y - PLAYER_ATTACK_REACH { // too far above player
-                    return;
+                    return false;
                 }
                 if (enemy_center_x - player_center_x).abs() > PLAYER_ATTACK_WIDTH {
-                    return;
+                    return false;
                 }
             },
             MoveDirection::Down => {
                 if enemy_center_y < player_center_y { // above player
-                    return;
+                    return false;
                 }
                 if enemy_center_y > player_center_y + PLAYER_ATTACK_REACH { // too far below player
-                    return;
+                    return false;
                 }
                 if (enemy_center_x - player_center_x).abs() > PLAYER_ATTACK_WIDTH {
-                    return;
+                    return false;
                 }
             },
             MoveDirection::Left => {
                 if enemy_center_x > player_center_x {
-                    return;
+                    return false;
                 }
                 if enemy_center_x < player_center_x - PLAYER_ATTACK_REACH {
-                    return;
+                    return false;
                 }
                 if (enemy_center_y - player_center_y).abs() > PLAYER_ATTACK_WIDTH {
-                    return;
+                    return false;
                 }
             },
             MoveDirection::Right => {
                 if enemy_center_x < player_center_x {
-                    return;
+                    return false;
                 }
                 if enemy_center_x > player_center_x + PLAYER_ATTACK_REACH {
-                    return;
+                    return false;
                 }
                 if (enemy_center_y - player_center_y).abs() > PLAYER_ATTACK_WIDTH {
-                    return;
+                    return false;
                 }
             },
         }
@@ -203,14 +204,25 @@ impl Player {
             ),
             |_: &Entity| true
         );
-        self.attack_manager.start_cooldown()
+        self.attack_manager.start_cooldown();
+        true
     }
 
     pub fn attack_enemies_if_in_range(&mut self, enemies: &mut EnemyLayout, knockback_amount: f32) {
+        let mut just_hit_an_enemy = false;
         let mut damage_each_enemy = |enemy: &mut Enemy| {
-            self.attack_enemy_if_in_range(enemy, knockback_amount);
+            //println!("{}", just_hit_an_enemy);
+            just_hit_an_enemy = just_hit_an_enemy || self.attack_enemy_if_in_range(enemy, knockback_amount);
         };
         enemies.do_action_to_all_enemies(&mut damage_each_enemy);
+
+        //println!("{}", just_hit_an_enemy);
+        let mut alert_nearby_enemies = |enemy: &mut Enemy| {
+            if just_hit_an_enemy {
+                enemy.trigger_aggro_if_alert();
+            }
+        };
+        enemies.do_action_to_all_enemies(&mut alert_nearby_enemies);
     }
 }
 

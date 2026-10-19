@@ -241,6 +241,11 @@ impl Enemy {
         (self.controller.next_tile_index_x, self.controller.next_tile_index_y)
     }
 
+    pub fn trigger_aggro_if_alert(&mut self) {
+        //println!("IM GONNA GET U");
+        self.anger_level = self.anger_level.transition(false, false, true);
+    }
+
     pub fn decide_next_action(&mut self, level: &Level, player: &Player) -> EnemyDecision {
         // yes this should probably be split into multiple functions I know
 

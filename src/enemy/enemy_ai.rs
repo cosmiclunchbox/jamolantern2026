@@ -16,7 +16,7 @@ pub struct EnemyAngryAI {
 }
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum EnemyDecision {
     AttackPlayer,
     StayStill,
@@ -40,7 +40,7 @@ impl EnemyAngryAI {
             destination_x: spawn_x,
             destination_y: spawn_y,
             next_tile_index_x,
-            next_tile_index_y
+            next_tile_index_y,
         }
     }
 
@@ -81,6 +81,19 @@ impl EnemyAngryAI {
         if current_pos == target_pos {
             //println!("YESSIR GOTEM");
             return EnemyDecision::AttackPlayer;
+        }
+
+        // the next tile the enemy decides to walk to must be a neighbor of its current tile, otherwise pathfinding breaks
+        // so this is just a failsafe, if the enemy isn't able to directly walk to that next cell at any point,
+        // it instead aligns itself on its own cell and then recalculates the path
+        let current_tile = coordinates_to_tile_index(self.enemy_center_logical_x, self.enemy_center_logical_y);
+        if !self.get_empty_neighboring_spaces(
+            self.next_tile_index_x, self.next_tile_index_y, level
+        ).contains(
+            &current_tile
+        ) {
+            self.next_tile_index_x = current_tile.0;
+            self.next_tile_index_y = current_tile.1;
         }
 
         let alignment_relative_to_next_tile = self.current_alignment_relative_to_next_tile_position();
@@ -173,6 +186,7 @@ impl EnemyAngryAI {
         // set next tile to move to
         self.next_tile_index_x = next_tile_x;
         self.next_tile_index_y = next_tile_y;
+        //println!("CURRENT: {:?}.... NEXT: {:?}", (self.enemy_center_logical_x, self.enemy_center_logical_y), (self.next_tile_index_x, self.next_tile_index_y));
 
         // yes yes I know this is copypasted from the other function
         let alignment_relative_to_next_tile = self.current_alignment_relative_to_next_tile_position();

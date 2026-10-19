@@ -3,6 +3,8 @@ mod enemy_anger;
 
 use macroquad::miniquad::gl::GL_RED;
 use macroquad::prelude::*;
+use ::rand::{random, random_range};
+use time::{SignedDuration, Timestamp};
 
 use crate::attack_manager::AttackManager;
 use crate::hitbox::MayHaveHitbox;
@@ -15,9 +17,8 @@ use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
 use crate::player::Player;
 
-use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, FRICTION};
+use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_HESITATION_CHANCE, ENEMY_HESITATION_MAX_LENGTH_MS, ENEMY_HESITATION_MIN_LENGTH_MS, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_MIN_DISTANCE_IN_ONE_DIRECTION_FOR_HESITATION, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
-use crate::iframe::IFrame;
 
 use enemy_ai::EnemyAngryAI;
 
@@ -26,12 +27,79 @@ pub use enemy_anger::{EnemyAngerLevel, EnemyType};
 
 // x, y are position of TOP LEFT CORNER of enemy hitbox
 
+
+struct EnemyHesitationManager {
+    previous_decision: EnemyDecision,
+    previous_decision_position: Option<(f32, f32)>,
+    expires_at: Option<Timestamp>
+}
+
+impl EnemyHesitationManager {
+    pub fn new() -> EnemyHesitationManager {
+        EnemyHesitationManager {
+            previous_decision: EnemyDecision::StayStill,
+            previous_decision_position: None,
+            expires_at: None
+        }
+    }
+
+    pub fn randomly_hesitate_if_changing_direction_while_moving(&mut self, new_decision: EnemyDecision, current_enemy_position: (f32, f32)) {
+        if self.is_hesitating() {
+            return;
+        }
+
+        
+        //println!("{:?} {:?}", self.previous_decision, new_decision);
+
+        if let (
+            EnemyDecision::Move(prev_direction), 
+            EnemyDecision::Move(new_direction)
+        ) = (&self.previous_decision, &new_decision) {
+            if *prev_direction == *new_direction {
+                return;
+            } else {
+                if let Some(previous_decision_position) = self.previous_decision_position {
+                    if get_dnd_distance(previous_decision_position, current_enemy_position) > ENEMY_MIN_DISTANCE_IN_ONE_DIRECTION_FOR_HESITATION {
+                        self.randomly_hesitate(new_decision.clone());
+                    }
+                }
+            }
+        }
+
+        self.previous_decision = new_decision;
+        self.previous_decision_position = Some(current_enemy_position);
+    }
+
+    fn randomly_hesitate(&mut self, new_decision: EnemyDecision) {
+        let hesitation_roll = random::<f32>();
+        if hesitation_roll >= ENEMY_HESITATION_CHANCE {
+            //println!("{:?}", hesitation_roll);
+            self.previous_decision = new_decision;
+            return;
+        }
+        
+        let hesitation_time = random_range(ENEMY_HESITATION_MIN_LENGTH_MS..=ENEMY_HESITATION_MAX_LENGTH_MS);
+        let expires_at: Timestamp = Timestamp::now().checked_add(
+            SignedDuration::milliseconds(hesitation_time as i64)
+        ).expect("gonna just expect this checked add should work ig");
+        self.expires_at = Some(expires_at);
+    }
+
+    pub fn is_hesitating(&self) -> bool {
+        let Some(expires_at) = self.expires_at else {
+            return false;
+        };
+        Timestamp::now() <= expires_at
+    }
+}
+
 pub struct Enemy {
     enemy_entity: Entity,
     controller: EnemyAngryAI,
     disposition: EnemyType,
     anger_level: EnemyAngerLevel,
-    attack_manager: AttackManager
+    attack_manager: AttackManager,
+    hesitation_manager: EnemyHesitationManager
 }
 
 impl Enemy {
@@ -51,7 +119,8 @@ impl Enemy {
             controller: EnemyAngryAI::at_position(spawn_x, spawn_y),
             disposition: personality,
             anger_level: EnemyAngerLevel::Neutral,
-            attack_manager: AttackManager::new(ENEMY_ATTACK_COOLDOWN_MS)
+            attack_manager: AttackManager::new(ENEMY_ATTACK_COOLDOWN_MS),
+            hesitation_manager: EnemyHesitationManager::new()
         }
     }
 
@@ -142,7 +211,17 @@ impl Enemy {
         self.enemy_entity.is_dead()
     }
 
-    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+    pub fn take_damage_if_condition_and_not_iframe(
+        &mut self,
+        knockback: Option<Knockback>, 
+        check_should_damage: impl Fn(&Entity) -> bool
+    ) {
+        if check_should_damage(&self.enemy_entity) {
+            self.take_damage_if_not_iframe(knockback);
+        }
+    }
+
+    fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
         self.enemy_entity.take_damage_if_not_iframe(knockback);
     }
 
@@ -166,7 +245,7 @@ impl Enemy {
         // yes this should probably be split into multiple functions I know
 
         let (neutral_to_alert, alert_to_neutral, alert_to_angry) = match &self.disposition {
-            EnemyType::Neutral => {
+            EnemyType::Idle => {
                 (
                     get_dnd_distance(
                         self.current_x_y_position_center(), 
@@ -223,12 +302,24 @@ impl Enemy {
         if self.attack_manager.on_cooldown() {
             return;
         }
-        player.take_damage_if_not_iframe(
+        player.take_damage_if_condition_and_not_iframe(
             Some(
                 Knockback::new(self.current_facing_direction(), knockback_amount)
-            )
+            ),
+            |_: &Entity| true
         );
         self.attack_manager.start_cooldown()
+    }
+
+    pub fn is_hesitating(&self) -> bool {
+        self.hesitation_manager.is_hesitating()
+    }
+
+    pub fn randomly_hesitate_if_changing_direction_while_moving(&mut self, new_decision: EnemyDecision) {
+        self.hesitation_manager.randomly_hesitate_if_changing_direction_while_moving(
+            new_decision, 
+            self.current_x_y_position_center()
+        );
     }
 }
 

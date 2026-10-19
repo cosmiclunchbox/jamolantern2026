@@ -120,7 +120,17 @@ impl Player {
         self.player_entity.is_dead()
     }
 
-    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+    pub fn take_damage_if_condition_and_not_iframe(
+        &mut self,
+        knockback: Option<Knockback>, 
+        check_should_damage: impl Fn(&Entity) -> bool
+    ) {
+        if check_should_damage(&self.player_entity) {
+            self.take_damage_if_not_iframe(knockback);
+        }
+    }
+
+    fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
         self.player_entity.take_damage_if_not_iframe(knockback);
     }
 
@@ -186,10 +196,11 @@ impl Player {
             },
         }
 
-        enemy.take_damage_if_not_iframe(
+        enemy.take_damage_if_condition_and_not_iframe(
             Some(
                 Knockback::new(self.current_facing_direction(), knockback_amount)
-            )
+            ),
+            |_: &Entity| true
         );
         self.attack_manager.start_cooldown()
     }

@@ -153,12 +153,13 @@ impl ActiveGameWorld {
             self.player.set_direction_based_on_velocity();
         }
 
-        let is_player_touching_danger_tile = self.level.get_tiles_that_entity_is_colliding_with(&self.player).iter().fold(
-            false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
-        );
-        if is_player_touching_danger_tile {
-            self.player.take_damage_if_not_iframe(None);
-        }
+        let is_touching_danger_tile = |e: &Entity| {
+            self.level.get_tiles_that_entity_is_colliding_with(e).iter().fold(
+                false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
+            )
+        };
+
+        self.player.take_damage_if_condition_and_not_iframe(None, is_touching_danger_tile);
         if self.player.is_dead() {
             return GameSceneTransition::ToLoseScene;
         }
@@ -171,6 +172,11 @@ impl ActiveGameWorld {
 
         if self.enemy.being_knocked_back() {
             self.enemy.take_knockback();
+
+        } else if self.enemy.is_hesitating() {
+            self.enemy.change_vertical_velocity_with_friction(0.0);
+            self.enemy.change_horizontal_velocity_with_friction(0.0);
+
         } else {
             // enemy ai (yes I know this hsould be its own function)
             let enemy_decision = self.enemy.decide_next_action(&self.level, &self.player);
@@ -204,6 +210,8 @@ impl ActiveGameWorld {
                     self.enemy.change_horizontal_velocity_with_friction(ENEMY_MOVEMENT_SPEED * delta_time);
                 },
             }
+
+            self.enemy.randomly_hesitate_if_changing_direction_while_moving(enemy_decision);
         }
 
         self.enemy.move_horizontal_by_current_velocity_clamped_check_collision(
@@ -218,6 +226,8 @@ impl ActiveGameWorld {
         if !self.enemy.being_knocked_back() {
             self.enemy.set_direction_based_on_velocity();
         }
+
+        self.enemy.take_damage_if_condition_and_not_iframe(None, is_touching_danger_tile);
 
         let (player_x, player_y) = self.player.current_x_y_position_center();
         self.camera.track_target_position_clamped(player_x, player_y);

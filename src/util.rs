@@ -13,7 +13,7 @@ pub fn get_dnd_distance(pos1: (f32, f32), pos2: (f32, f32)) -> f32 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MoveDirection {
     Up,
     Down,

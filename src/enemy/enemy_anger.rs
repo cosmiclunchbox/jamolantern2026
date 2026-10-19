@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum EnemyType {
-    Neutral,
+    Idle,
     Impatient
 }
 

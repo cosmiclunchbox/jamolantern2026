@@ -280,6 +280,19 @@ impl Enemy {
                     )
                 )
             },
+            EnemyType::Enraged => {
+                (
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) < ENEMY_DETECTION_RADIUS,
+                    false,
+                    get_dnd_distance(
+                        self.current_x_y_position_center(), 
+                        player.current_x_y_position_center()
+                    ) < ENEMY_DETECTION_RADIUS,
+                )
+            }
         };
 
         self.anger_level = self.anger_level.transition(

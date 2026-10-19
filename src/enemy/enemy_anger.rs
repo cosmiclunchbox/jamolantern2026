@@ -1,7 +1,8 @@
 #[derive(Debug)]
 pub enum EnemyType {
     Idle,
-    Impatient
+    Impatient,
+    Enraged
 }
 
 impl EnemyType {
@@ -9,6 +10,7 @@ impl EnemyType {
         match id {
             0 => EnemyType::Idle,
             1 => EnemyType::Impatient,
+            2 => EnemyType::Enraged,
             _ => panic!("Unrecognized enemy type id.")
         }
     }

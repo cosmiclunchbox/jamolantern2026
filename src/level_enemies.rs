@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{camera::GameCamera, enemy::{Enemy, EnemyDecision, EnemyType}, knockback_manager::Knockback, level::Level, living_entity::Entity, player::Player, util::MoveDirection};
+use crate::{camera::GameCamera, constants::ENEMY_SPAWN_OFFSET, enemy::{Enemy, EnemyDecision, EnemyType}, knockback_manager::Knockback, level::Level, living_entity::Entity, player::Player, util::MoveDirection};
 
 pub struct EnemyLayout {
     enemies: Vec<Enemy>
@@ -37,8 +37,8 @@ impl EnemyLayout {
                     .expect("enemy type id should be unsigned int")
             );
             let enemy = Enemy::new(
-                enemy_x,
-                enemy_y,
+                enemy_x + ENEMY_SPAWN_OFFSET,
+                enemy_y + ENEMY_SPAWN_OFFSET,
                 0.0, 
                 0.0, 
                 level_width, 

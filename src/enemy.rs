@@ -17,7 +17,7 @@ use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
 use crate::player::Player;
 
-use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_HESITATION_CHANCE, ENEMY_HESITATION_MAX_LENGTH_MS, ENEMY_HESITATION_MIN_LENGTH_MS, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_MIN_DISTANCE_IN_ONE_DIRECTION_FOR_HESITATION, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_HESITATION_CHANCE, ENEMY_HESITATION_MAX_LENGTH_MS, ENEMY_HESITATION_MIN_LENGTH_MS, ENEMY_KNOCKBACK_DURATION_MS, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_MIN_DISTANCE_IN_ONE_DIRECTION_FOR_HESITATION, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, KNOCKBACK_DURATION_MS};
 use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
 
 use enemy_ai::EnemyAngryAI;
@@ -215,14 +215,15 @@ impl Enemy {
         &mut self,
         knockback: Option<Knockback>, 
         check_should_damage: impl Fn(&Entity) -> bool
-    ) {
+    ) -> bool {
         if check_should_damage(&self.enemy_entity) {
-            self.take_damage_if_not_iframe(knockback);
+            return self.take_damage_if_not_iframe(knockback);
         }
+        false
     }
 
-    fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
-        self.enemy_entity.take_damage_if_not_iframe(knockback);
+    fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) -> bool {
+        self.enemy_entity.take_damage_if_not_iframe(knockback)
     }
 
     pub fn is_taking_damage(&self) -> bool {
@@ -322,7 +323,7 @@ impl Enemy {
         }
         player.take_damage_if_condition_and_not_iframe(
             Some(
-                Knockback::new(self.current_facing_direction(), knockback_amount)
+                Knockback::new(self.current_facing_direction(), knockback_amount, KNOCKBACK_DURATION_MS)
             ),
             |_: &Entity| true
         );
@@ -338,6 +339,10 @@ impl Enemy {
             new_decision, 
             self.current_x_y_position_center()
         );
+    }
+
+    pub fn cancel_velocity(&mut self) {
+        self.enemy_entity.cancel_velocity();
     }
 }
 

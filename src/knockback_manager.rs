@@ -1,6 +1,6 @@
 use time::{SignedDuration, Timestamp};
 
-use crate::{constants::{KNOCKBACK_ACCELERATION_DURATION_MS, KNOCKBACK_DURATION_MS}, util::MoveDirection};
+use crate::{constants::{KNOCKBACK_ACCELERATION_DURATION_MS}, util::MoveDirection};
 
 #[derive(Clone)]
 pub struct Knockback {
@@ -11,12 +11,12 @@ pub struct Knockback {
 }
 
 impl Knockback {
-    pub fn new(direction: MoveDirection, amount: f32) -> Knockback {
+    pub fn new(direction: MoveDirection, amount: f32, duration: i32) -> Knockback {
         let initial_acceleration_expires_at: Timestamp = Timestamp::now().checked_add(
             SignedDuration::milliseconds(KNOCKBACK_ACCELERATION_DURATION_MS as i64)
         ).expect("gonna just expect this checked add should work ig");
         let expires_at: Timestamp = Timestamp::now().checked_add(
-            SignedDuration::milliseconds(KNOCKBACK_DURATION_MS as i64)
+            SignedDuration::milliseconds(duration as i64)
         ).expect("gonna just expect this checked add should work ig");
         Knockback {
             direction,

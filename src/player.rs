@@ -6,7 +6,7 @@ use crate::hitbox::MayHaveHitbox;
 
 use crate::camera::GameCamera;
 
-use crate::constants::{PLAYER_ATTACK_COOLDOWN_MS, PLAYER_ATTACK_WIDTH, PLAYER_ATTACK_REACH, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
+use crate::constants::{ENEMY_KNOCKBACK_DURATION_MS, KNOCKBACK_DURATION_MS, PLAYER_ATTACK_COOLDOWN_MS, PLAYER_ATTACK_REACH, PLAYER_ATTACK_WIDTH, PLAYER_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE};
 use crate::level_enemies::EnemyLayout;
 use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
@@ -198,9 +198,9 @@ impl Player {
             },
         }
 
-        enemy.take_damage_if_condition_and_not_iframe(
+        let _ = enemy.take_damage_if_condition_and_not_iframe(
             Some(
-                Knockback::new(self.current_facing_direction(), knockback_amount)
+                Knockback::new(self.current_facing_direction(), knockback_amount, ENEMY_KNOCKBACK_DURATION_MS)
             ),
             |_: &Entity| true
         );
@@ -223,6 +223,10 @@ impl Player {
             }
         };
         enemies.do_action_to_all_enemies(&mut alert_nearby_enemies);
+    }
+
+    pub fn cancel_velocity(&mut self) {
+        self.player_entity.cancel_velocity();
     }
 }
 

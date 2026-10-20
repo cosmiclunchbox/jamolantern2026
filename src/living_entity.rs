@@ -134,6 +134,11 @@ impl Entity {
         self.logical_y_velocity = velocity;
     }
 
+    pub fn cancel_velocity(&mut self) {
+        self.set_horizontal_velocity(0.0);
+        self.set_vertical_velocity(0.0);
+    }
+
     pub fn change_horizontal_velocity_with_friction(&mut self, acceleration: f32) {
         self.logical_x_velocity += acceleration;
         self.logical_x_velocity *= FRICTION;
@@ -222,14 +227,18 @@ impl Entity {
         }
     }
 
-    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) {
+    pub fn take_damage_if_not_iframe(&mut self, knockback: Option<Knockback>) -> bool {
+        // returns whether damage was taken
         if self.can_take_damage() {
             self.take_damage();
             if let Some(knockback) = knockback {
                 self.knockback_state = Some(knockback.clone());
+                self.cancel_velocity();
                 //self.take_knockback_set_velocity(knockback.direction, knockback.amount);
             }
+            return true
         }
+        false
     }
 
     fn take_knockback_set_velocity(&mut self, damage_direction: MoveDirection, knockback_amount: f32, being_accelerated: bool) {

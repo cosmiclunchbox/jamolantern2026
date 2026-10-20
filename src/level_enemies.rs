@@ -60,6 +60,7 @@ impl EnemyLayout {
         for enemy in &mut self.enemies {
             act_on_enemy(enemy);
         }
+        self.remove_all_dead_enemies();
     }
 
     pub fn render_all(&self, camera: &GameCamera) {
@@ -97,6 +98,7 @@ impl EnemyLayout {
         for enemy in &mut self.enemies {
             enemy.take_damage_if_condition_and_not_iframe(knockback.clone(), check_should_damage);
         }
+        self.remove_all_dead_enemies();
     }
 
     pub fn make_each_enemy_act_based_on_current_world_state(
@@ -151,5 +153,11 @@ impl EnemyLayout {
                 enemy.randomly_hesitate_if_changing_direction_while_moving(enemy_decision);
             }
         }
+    }
+
+    pub fn remove_all_dead_enemies(&mut self) {
+        self.enemies.retain(
+            |e| !e.is_dead()
+        )
     }
 }

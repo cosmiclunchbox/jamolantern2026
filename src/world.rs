@@ -36,8 +36,8 @@ impl ActiveGameWorld {
             level.height as f32
         );
         let player = Player::new(
-            1.0, 
-            1.0,
+            2.0, 
+            7.0,
             0.0, 
             0.0, 
             level.width as f32, 

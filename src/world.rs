@@ -35,22 +35,22 @@ impl ActiveGameWorld {
             level.width as f32, 
             level.height as f32
         );
-        /*let player = Player::new(
+        let player = Player::new(
             2.0, 
             7.0,
             0.0, 
             0.0, 
             level.width as f32, 
             level.height as f32
-        );*/
-        let player = Player::new(
+        );
+        /*let player = Player::new(
             45.0, 
             19.0,
             0.0, 
             0.0, 
             level.width as f32, 
             level.height as f32
-        );
+        );*/
         let enemies = EnemyLayout::from_enemy_file_with_level_dimensions(
             ENEMIES_FILE_PATH,
             level.width as f32,

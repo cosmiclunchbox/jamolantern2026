@@ -19,6 +19,8 @@ use constants::WINDOW_TITLE;
 use world::ActiveGameWorld;
 use menus::GameOverMenu;
 
+use crate::menus::YouWinMenu;
+
 
 fn window_configuration() -> Conf {
     Conf {
@@ -40,7 +42,7 @@ pub enum GameSceneTransition {
 
 enum GameState {
     Playing(ActiveGameWorld),
-    Win,
+    Win(YouWinMenu),
     Lose(GameOverMenu)
 }
 
@@ -54,7 +56,9 @@ impl GameState {
             GameState::Playing(s) => {
                 s.render()
             },
-            GameState::Win => (), // TODO
+            GameState::Win(w) => {
+                w.render()
+            }, // TODO
             GameState::Lose(m) => {
                 m.render()
             }, // TODO
@@ -66,7 +70,7 @@ impl GameState {
             GameState::Playing(s) => {
                 s.update_on_each_frame()
             },
-            GameState::Win => GameSceneTransition::Continue, // TODO
+            GameState::Win(_w) => GameSceneTransition::Continue, // TODO
             GameState::Lose(_m) => GameSceneTransition::Continue, // TODO
         }
     }
@@ -75,7 +79,7 @@ impl GameState {
         match self.update_on_each_frame() {
             GameSceneTransition::Continue => self,
             GameSceneTransition::ToLoseScene => GameState::Lose(GameOverMenu::new()),
-            GameSceneTransition::ToWinScene => GameState::Win,
+            GameSceneTransition::ToWinScene => GameState::Win(YouWinMenu::new()),
             GameSceneTransition::ToNewGameScene => GameState::start()
         }
     }

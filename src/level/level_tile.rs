@@ -10,6 +10,7 @@ pub enum LevelTileType {
     Ground,
     Wall,
     Sinkhole,
+    UspsEntrance,
 }
 
 impl LevelTileType {
@@ -18,6 +19,7 @@ impl LevelTileType {
             0 => LevelTileType::Ground,
             1 => LevelTileType::Wall,
             2 => LevelTileType::Sinkhole,
+            3 => LevelTileType::UspsEntrance,
             _ => panic!("Unrecognized tile id.")
         }
     }
@@ -33,6 +35,9 @@ impl LevelTileType {
             },
             LevelTileType::Sinkhole => {
                 draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, RED);
+            },
+            LevelTileType::UspsEntrance => {
+                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, YELLOW);
             },
         }
     }
@@ -69,7 +74,7 @@ impl MayHaveHitbox for LevelTile {
     fn get_hitbox(&self) -> Option<Rect> {
         match self.tile_type {
             LevelTileType::Ground => None,
-            LevelTileType::Wall | LevelTileType::Sinkhole => Some(
+            LevelTileType::Wall | LevelTileType::Sinkhole | LevelTileType::UspsEntrance => Some(
                 Rect {
                     x: self.tl_logical_x as f32,
                     y: self.tl_logical_y as f32,

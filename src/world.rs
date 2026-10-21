@@ -12,7 +12,7 @@ use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
 use crate::player::Player;
 use crate::camera::GameCamera;
-use crate::constants::{ENEMIES_FILE_PATH, ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::constants::{ENEMIES_FILE_PATH, ENEMY_KNOCKBACK_AMOUNT, ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
 use crate::util::MoveDirection;
 
 pub struct ActiveGameWorld {
@@ -35,9 +35,17 @@ impl ActiveGameWorld {
             level.width as f32, 
             level.height as f32
         );
-        let player = Player::new(
+        /*let player = Player::new(
             2.0, 
             7.0,
+            0.0, 
+            0.0, 
+            level.width as f32, 
+            level.height as f32
+        );*/
+        let player = Player::new(
+            45.0, 
+            19.0,
             0.0, 
             0.0, 
             level.width as f32, 
@@ -85,6 +93,18 @@ impl ActiveGameWorld {
                 |x| match x { TouchingLevelElement::Solid => true, _ => false }
             ).collect::<Vec<_>>();
             !colliding_ground_tiles.is_empty()
+        };
+
+        let is_touching_danger_tile = |e: &Entity| {
+            self.level.get_tiles_that_entity_is_colliding_with(e).iter().fold(
+                false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
+            )
+        };
+
+        let is_touching_win_tile = |e: &Player| {
+            self.level.get_tiles_that_entity_is_colliding_with(e).iter().fold(
+                false, |b, x| b || match x { TouchingLevelElement::Win => true, _ => false }
+            )
         };
 
         let mut player_x_acceleration = 0.0;
@@ -151,20 +171,18 @@ impl ActiveGameWorld {
             self.player.set_direction_based_on_velocity();
         }
 
-        let is_touching_danger_tile = |e: &Entity| {
-            self.level.get_tiles_that_entity_is_colliding_with(e).iter().fold(
-                false, |b, x| b || match x { TouchingLevelElement::Danger => true, _ => false }
-            )
-        };
-
         self.player.take_damage_if_condition_and_not_iframe(None, is_touching_danger_tile);
         if self.player.is_dead() {
             return GameSceneTransition::ToLoseScene;
         }
 
+        if is_touching_win_tile(&self.player) {
+            return GameSceneTransition::ToWinScene;
+        }
+
         self.context.do_on_key_press(
             KeyCode::Space,
-            || { self.player.attack_enemies_if_in_range(&mut self.enemies, KNOCKBACK_AMOUNT * delta_time); },
+            || { self.player.attack_enemies_if_in_range(&mut self.enemies, ENEMY_KNOCKBACK_AMOUNT * delta_time); },
             || {}
         );
 

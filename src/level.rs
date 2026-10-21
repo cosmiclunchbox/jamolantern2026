@@ -29,7 +29,8 @@ struct LevelCreationFileParsingResult {
 #[derive(Debug)]
 pub enum TouchingLevelElement {
     Solid,
-    Danger
+    Danger,
+    Win
 }
 
 impl Level {
@@ -105,6 +106,7 @@ impl Level {
         match tile_type {
             LevelTileType::Wall => TouchingLevelElement::Solid,
             LevelTileType::Sinkhole => TouchingLevelElement::Danger,
+            LevelTileType::UspsEntrance => TouchingLevelElement::Win,
             LevelTileType::Ground => panic!("Attempted to collide with a noncollidable tile type.")
         }
     }

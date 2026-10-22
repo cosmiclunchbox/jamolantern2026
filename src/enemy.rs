@@ -18,6 +18,7 @@ use crate::knockback_manager::Knockback;
 use crate::player::Player;
 
 use crate::constants::{ENEMY_ATTACK_COOLDOWN_MS, ENEMY_ATTACK_REACH, ENEMY_CONSIDERS_IN_LINE_MARGIN, ENEMY_DETECTION_RADIUS, ENEMY_HEIGHT_AS_MULTIPLE_OF_TILE_SIZE, ENEMY_HESITATION_CHANCE, ENEMY_HESITATION_MAX_LENGTH_MS, ENEMY_HESITATION_MIN_LENGTH_MS, ENEMY_KNOCKBACK_DURATION_MS, ENEMY_MAX_HEALTH, ENEMY_MIN_ANGER_DISTANCE, ENEMY_MIN_DISTANCE_IN_ONE_DIRECTION_FOR_HESITATION, ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE, KNOCKBACK_DURATION_MS};
+use crate::resources::Resources;
 use crate::util::{get_tile_size, get_dnd_distance, MoveDirection};
 
 use enemy_ai::EnemyAngryAI;
@@ -124,7 +125,7 @@ impl Enemy {
         }
     }
 
-    pub fn render(&self, camera: &GameCamera) {
+    pub fn render(&self, camera: &GameCamera, resources: &Resources) {
         let (logical_x, logical_y) = self.current_x_y_position_top_left();
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let enemy_width = ENEMY_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();

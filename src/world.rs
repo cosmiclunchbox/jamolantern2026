@@ -13,6 +13,7 @@ use crate::knockback_manager::Knockback;
 use crate::player::Player;
 use crate::camera::GameCamera;
 use crate::constants::{ENEMIES_FILE_PATH, ENEMY_KNOCKBACK_AMOUNT, ENEMY_MOVEMENT_SPEED, ENEMY_MOVEMENT_SPEED_THRESHOLD, KNOCKBACK_AMOUNT, LEVEL_FILE_PATH, PLAYER_MOVEMENT_SPEED, PLAYER_MOVEMENT_SPEED_THRESHOLD};
+use crate::resources::Resources;
 use crate::util::MoveDirection;
 
 pub struct ActiveGameWorld {
@@ -66,10 +67,10 @@ impl ActiveGameWorld {
         }
     }
 
-    pub fn render(&self) {
-        self.level.render(&self.camera);
-        self.player.render(&self.camera);
-        self.enemies.render_all(&self.camera);
+    pub fn render(&self, resources: &Resources) {
+        self.level.render(&self.camera, resources);
+        self.player.render(&self.camera, resources);
+        self.enemies.render_all(&self.camera, resources);
 
         draw_text(String::from("FPS: ") + &get_fps().to_string(), 20.0, 20.0, 30.0, DARKGRAY);
         draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);

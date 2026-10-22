@@ -9,6 +9,7 @@ use std::fs;
 use crate::camera::GameCamera;
 use crate::hitbox::MayHaveHitbox;
 pub use crate::level::level_tile::LevelTileType;
+use crate::resources::Resources;
 
 //const NUM_TILES_PER_SCREEN_WIDTH: u32 = 12;
 
@@ -94,10 +95,10 @@ impl Level {
         }
     }
 
-    pub fn render(&self, camera: &GameCamera) {
+    pub fn render(&self, camera: &GameCamera, resources: &Resources) {
         for x in 0..self.width {
             for y in 0..self.height {
-                self.grid.get(&(x as i32, y as i32)).expect("Entire rectangular grid should be tiles.").render(camera);
+                self.grid.get(&(x as i32, y as i32)).expect("Entire rectangular grid should be tiles.").render(camera, resources);
             }
         }
     }
@@ -107,7 +108,7 @@ impl Level {
             LevelTileType::Wall => TouchingLevelElement::Solid,
             LevelTileType::Sinkhole => TouchingLevelElement::Danger,
             LevelTileType::UspsEntrance => TouchingLevelElement::Win,
-            LevelTileType::Ground => panic!("Attempted to collide with a noncollidable tile type.")
+            _ => panic!("Attempted to collide with a noncollidable tile type.")
         }
     }
 

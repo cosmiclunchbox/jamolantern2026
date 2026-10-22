@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{camera::GameCamera, constants::ENEMY_SPAWN_OFFSET, enemy::{Enemy, EnemyDecision, EnemyType}, knockback_manager::Knockback, level::Level, living_entity::Entity, player::Player, util::MoveDirection};
+use crate::{camera::GameCamera, constants::ENEMY_SPAWN_OFFSET, enemy::{Enemy, EnemyDecision, EnemyType}, knockback_manager::Knockback, level::Level, living_entity::Entity, player::Player, resources::Resources, util::MoveDirection};
 
 pub struct EnemyLayout {
     enemies: Vec<Enemy>
@@ -63,9 +63,9 @@ impl EnemyLayout {
         self.remove_all_dead_enemies();
     }
 
-    pub fn render_all(&self, camera: &GameCamera) {
+    pub fn render_all(&self, camera: &GameCamera, resources: &Resources) {
         for enemy in &self.enemies {
-            enemy.render(camera);
+            enemy.render(camera, resources);
         }
     }
 

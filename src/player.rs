@@ -10,6 +10,7 @@ use crate::constants::{ENEMY_KNOCKBACK_DURATION_MS, KNOCKBACK_DURATION_MS, PLAYE
 use crate::level_enemies::EnemyLayout;
 use crate::living_entity::{Entity};
 use crate::knockback_manager::Knockback;
+use crate::resources::Resources;
 use crate::util::{MoveDirection, coordinates_to_tile_index, get_tile_size};
 
 // x, y are position of TOP LEFT CORNER of player hitbox
@@ -36,7 +37,7 @@ impl Player {
         }
     }
 
-    pub fn render(&self, camera: &GameCamera) {
+    pub fn render(&self, camera: &GameCamera, resources: &Resources) {
         let (logical_x, logical_y) = self.current_x_y_position_top_left();
         let (top_left_x, top_left_y) = camera.get_screen_position_for_logical_coordinates(logical_x, logical_y);
         let player_width = PLAYER_WIDTH_AS_MULTIPLE_OF_TILE_SIZE * get_tile_size();
@@ -44,9 +45,9 @@ impl Player {
         let player_color = if self.is_taking_damage() {
             MAROON
         } else if !self.can_take_damage() {
-            DARKGRAY
+            LIGHTGRAY
         } else {
-            BLACK
+            DARKGREEN
         };
         draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
         match self.current_facing_direction() {

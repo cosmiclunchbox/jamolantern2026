@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 
+mod resources;
 mod level;
 mod level_enemies;
 mod hitbox;
@@ -19,7 +20,7 @@ use constants::WINDOW_TITLE;
 use world::ActiveGameWorld;
 use menus::GameOverMenu;
 
-use crate::menus::YouWinMenu;
+use crate::{menus::YouWinMenu, resources::Resources};
 
 
 fn window_configuration() -> Conf {
@@ -51,10 +52,10 @@ impl GameState {
         GameState::Playing(ActiveGameWorld::new())
     }
 
-    fn render(&self) {
+    fn render(&self, resources: &Resources) {
         match self {
             GameState::Playing(s) => {
-                s.render()
+                s.render(resources)
             },
             GameState::Win(w) => {
                 w.render()
@@ -88,10 +89,12 @@ impl GameState {
 
 #[macroquad::main(window_configuration)]
 async fn main() {
+    set_pc_assets_folder("assets");
+    let resources = Resources::load().await;
     let mut game_state = GameState::start();
     loop {
         game_state = game_state.update_on_each_frame_and_transition_scene();
-        game_state.render();
+        game_state.render(&resources);
         next_frame().await
     }
 }

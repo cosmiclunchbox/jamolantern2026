@@ -105,7 +105,7 @@ impl Level {
 
     fn tile_type_to_touching_level_element_result(tile_type: &LevelTileType) -> TouchingLevelElement {
         match tile_type {
-            LevelTileType::Wall => TouchingLevelElement::Solid,
+            LevelTileType::Wall | LevelTileType::House1 | LevelTileType::House2 => TouchingLevelElement::Solid,
             LevelTileType::Sinkhole => TouchingLevelElement::Danger,
             LevelTileType::UspsEntrance => TouchingLevelElement::Win,
             _ => panic!("Attempted to collide with a noncollidable tile type.")

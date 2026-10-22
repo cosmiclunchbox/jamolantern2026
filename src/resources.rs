@@ -11,7 +11,10 @@ pub struct Resources {
     pub level_road8: Texture2D,
     pub level_road9: Texture2D,
     pub level_road10: Texture2D,
-    pub level_grass1: Texture2D
+    pub level_grass1: Texture2D,
+    pub level_house1: Texture2D,
+    pub level_house2: Texture2D,
+    pub level_roof1: Texture2D,
 }
 
 impl Resources {
@@ -39,6 +42,12 @@ impl Resources {
         level_road10.set_filter(FilterMode::Nearest);
         let level_grass1 = load_texture("grass1.png").await.expect("grass1.png should exist");
         level_grass1.set_filter(FilterMode::Nearest);
+        let level_house1 = load_texture("house1.png").await.expect("house1.png should exist");
+        level_house1.set_filter(FilterMode::Nearest);
+        let level_house2 = load_texture("house2.png").await.expect("house2.png should exist");
+        level_house2.set_filter(FilterMode::Nearest);
+        let level_roof1 = load_texture("roof1.png").await.expect("roof1.png should exist");
+        level_roof1.set_filter(FilterMode::Nearest);
         build_textures_atlas();
 
         Resources {
@@ -52,7 +61,10 @@ impl Resources {
             level_road8,
             level_road9,
             level_road10,
-            level_grass1
+            level_grass1,
+            level_house1,
+            level_house2,
+            level_roof1,
         }
     }
 }

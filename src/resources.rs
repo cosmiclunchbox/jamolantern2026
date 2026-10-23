@@ -15,6 +15,11 @@ pub struct Resources {
     pub level_house1: Texture2D,
     pub level_house2: Texture2D,
     pub level_roof1: Texture2D,
+    pub level_usps1: Texture2D,
+    pub level_usps2: Texture2D,
+    pub level_uspswin: Texture2D,
+    pub level_hazard1: Texture2D,
+    pub player_package: Texture2D
 }
 
 impl Resources {
@@ -48,6 +53,16 @@ impl Resources {
         level_house2.set_filter(FilterMode::Nearest);
         let level_roof1 = load_texture("roof1.png").await.expect("roof1.png should exist");
         level_roof1.set_filter(FilterMode::Nearest);
+        let level_usps1 = load_texture("usps1.png").await.expect("usps1.png should exist");
+        level_usps1.set_filter(FilterMode::Nearest);
+        let level_usps2 = load_texture("usps2.png").await.expect("usps2.png should exist");
+        level_usps2.set_filter(FilterMode::Nearest);
+        let level_uspswin = load_texture("uspswin.png").await.expect("uspswin.png should exist");
+        level_uspswin.set_filter(FilterMode::Nearest);
+        let level_hazard1 = load_texture("hazard1.png").await.expect("hazard1.png should exist");
+        level_hazard1.set_filter(FilterMode::Nearest);
+        let player_package = load_texture("package.png").await.expect("package.png should exist");
+        player_package.set_filter(FilterMode::Nearest);
         build_textures_atlas();
 
         Resources {
@@ -65,6 +80,11 @@ impl Resources {
             level_house1,
             level_house2,
             level_roof1,
+            level_usps1,
+            level_usps2,
+            level_uspswin,
+            level_hazard1,
+            player_package
         }
     }
 }

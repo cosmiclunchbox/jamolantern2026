@@ -25,6 +25,8 @@ pub enum LevelTileType {
     House2,
     Sinkhole,
     UspsEntrance,
+    Usps1,
+    Usps2,
 }
 
 impl LevelTileType {
@@ -46,6 +48,8 @@ impl LevelTileType {
             13 => LevelTileType::Road10,
             14 => LevelTileType::House1,
             15 => LevelTileType::House2,
+            16 => LevelTileType::Usps1,
+            17 => LevelTileType::Usps2,
             _ => panic!("Unrecognized tile id.")
         }
     }
@@ -100,17 +104,24 @@ impl LevelTileType {
                 draw_texture_ex(&resources.level_house2, tl_screen_x, tl_screen_y, WHITE, tile_draw_params);
             },
             LevelTileType::Sinkhole => {
-                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, RED);
+                draw_texture_ex(&resources.level_hazard1, tl_screen_x, tl_screen_y, WHITE, tile_draw_params);
             },
             LevelTileType::UspsEntrance => {
-                draw_rectangle(tl_screen_x, tl_screen_y, tile_size, tile_size, YELLOW);
+                draw_texture_ex(&resources.level_uspswin, tl_screen_x, tl_screen_y, WHITE, tile_draw_params);
+            },
+            LevelTileType::Usps1 => {
+                draw_texture_ex(&resources.level_usps1, tl_screen_x, tl_screen_y, WHITE, tile_draw_params);
+            },
+            LevelTileType::Usps2 => {
+                draw_texture_ex(&resources.level_usps2, tl_screen_x, tl_screen_y, WHITE, tile_draw_params);
             },
         }
     }
 
     pub fn is_solid(&self) -> bool {
         match self {
-            LevelTileType::Wall | LevelTileType::House1 | LevelTileType::House2 | LevelTileType::Sinkhole | LevelTileType::UspsEntrance => true,
+            LevelTileType::Wall | LevelTileType::House1 | LevelTileType::House2 | LevelTileType::Sinkhole |
+            LevelTileType::UspsEntrance | LevelTileType::Usps1 | LevelTileType::Usps2 => true,
             _ => false
         }
     }
@@ -147,8 +158,10 @@ impl MayHaveHitbox for LevelTile {
     fn get_hitbox(&self) -> Option<Rect> {
         match self.tile_type {
             LevelTileType::Grass1 | LevelTileType:: Road1 | LevelTileType::Road2 | LevelTileType::Road3 | LevelTileType:: Road4 | 
-            LevelTileType::Road5 | LevelTileType::Road6 | LevelTileType::Road7 | LevelTileType::Road8 | LevelTileType::Road9 | LevelTileType::Road10 => None,
-            LevelTileType::Wall | LevelTileType::House1 | LevelTileType::House2 | LevelTileType::Sinkhole | LevelTileType::UspsEntrance => Some(
+            LevelTileType::Road5 | LevelTileType::Road6 | LevelTileType::Road7 | LevelTileType::Road8 | LevelTileType::Road9 | 
+            LevelTileType::Road10 => None,
+            LevelTileType::Wall | LevelTileType::House1 | LevelTileType::House2 | LevelTileType::Sinkhole | LevelTileType::UspsEntrance |
+            LevelTileType::Usps1 | LevelTileType::Usps2 => Some(
                 Rect {
                     x: self.tl_logical_x as f32,
                     y: self.tl_logical_y as f32,

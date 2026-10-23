@@ -27,7 +27,7 @@ impl GameCamera {
             logical_width,
             logical_height
         );
-        println!("HIHIHIHIHIHIHHHHIIHHIHIHII {} {}", center_logical_x, center_logical_y);
+        //println!("HIHIHIHIHIHIHHHHIIHHIHIHII {} {}", center_logical_x, center_logical_y);
         GameCamera {
             center_logical_x,
             center_logical_y,

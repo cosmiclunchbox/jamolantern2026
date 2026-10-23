@@ -47,21 +47,49 @@ impl Player {
         } else if !self.can_take_damage() {
             LIGHTGRAY
         } else {
-            DARKGREEN
+            Color { r: 0.2, g: 0.3, b: 0.2, a: 1.0}
         };
         draw_rectangle(top_left_x, top_left_y, player_width, player_height, player_color);
-        match self.current_facing_direction() {
+
+        let facing = self.current_facing_direction();
+        
+        match facing {
             MoveDirection::Up => {
+                let tile_draw_params = DrawTextureParams {
+                    dest_size: Some(Vec2::new(player_width * 0.5, player_height)),
+                    rotation: if self.attack_manager.on_cooldown() { 0.0 } else { -1.2 },
+                    ..Default::default()
+                };
                 draw_circle(top_left_x + player_width * 0.5, top_left_y + player_height * 0.25, player_width * 0.2, YELLOW);
+                draw_texture_ex(&resources.player_package, top_left_x + player_width * 0.6, top_left_y - player_height * 0.7, WHITE, tile_draw_params);
+
             },
             MoveDirection::Down => {
+                let tile_draw_params = DrawTextureParams {
+                    dest_size: Some(Vec2::new(player_width * 0.5, player_height)),
+                    rotation: if self.attack_manager.on_cooldown() { 0.0 } else { 1.2 },
+                    ..Default::default()
+                };
                 draw_circle(top_left_x + player_width * 0.5, top_left_y + player_height * 0.75, player_width * 0.2, YELLOW);
+                draw_texture_ex(&resources.player_package, top_left_x + player_width * 0.6, top_left_y + player_height * 0.7, WHITE, tile_draw_params);
             }
             MoveDirection::Left => {
+                let tile_draw_params = DrawTextureParams {
+                    dest_size: Some(Vec2::new(player_width * 0.5, player_height)),
+                    rotation: if self.attack_manager.on_cooldown() { 1.57 } else { -0.3 },
+                    ..Default::default()
+                };
                 draw_circle(top_left_x + player_width * 0.25, top_left_y + player_height * 0.5, player_width * 0.2, YELLOW);
+                draw_texture_ex(&resources.player_package, top_left_x - player_width * 0.6, top_left_y, WHITE, tile_draw_params);
             },
             MoveDirection::Right => {
+                let tile_draw_params = DrawTextureParams {
+                    dest_size: Some(Vec2::new(player_width * 0.5, player_height)),
+                    rotation: if self.attack_manager.on_cooldown() { 1.57 } else { 0.3 },
+                    ..Default::default()
+                };
                 draw_circle(top_left_x + player_width * 0.75, top_left_y + player_height * 0.5, player_width * 0.2, YELLOW);
+                draw_texture_ex(&resources.player_package, top_left_x + player_width * 1.1, top_left_y, WHITE, tile_draw_params);
             },
         }
     }

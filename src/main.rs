@@ -20,7 +20,7 @@ use constants::WINDOW_TITLE;
 use world::ActiveGameWorld;
 use menus::GameOverMenu;
 
-use crate::{menus::YouWinMenu, resources::Resources};
+use crate::{menus::{MainMenu, YouWinMenu}, resources::Resources};
 
 
 fn window_configuration() -> Conf {
@@ -42,6 +42,7 @@ pub enum GameSceneTransition {
 
 
 enum GameState {
+    MainMenu(MainMenu),
     Playing(ActiveGameWorld),
     Win(YouWinMenu),
     Lose(GameOverMenu)
@@ -63,6 +64,9 @@ impl GameState {
             GameState::Lose(m) => {
                 m.render()
             }, // TODO
+            GameState::MainMenu(m) => {
+                m.render()
+            }
         }
     }
 
@@ -71,8 +75,15 @@ impl GameState {
             GameState::Playing(s) => {
                 s.update_on_each_frame()
             },
-            GameState::Win(_w) => GameSceneTransition::Continue, // TODO
-            GameState::Lose(_m) => GameSceneTransition::Continue, // TODO
+            GameState::Win(w) => {
+                w.update_on_each_frame()
+            },
+            GameState::Lose(m) => {
+                m.update_on_each_frame()
+            },
+            GameState::MainMenu(m) => {
+                m.update_on_each_frame()
+            },
         }
     }
 
@@ -91,7 +102,7 @@ impl GameState {
 async fn main() {
     set_pc_assets_folder("assets");
     let resources = Resources::load().await;
-    let mut game_state = GameState::start();
+    let mut game_state = GameState::MainMenu(MainMenu::new());
     loop {
         game_state = game_state.update_on_each_frame_and_transition_scene();
         game_state.render(&resources);

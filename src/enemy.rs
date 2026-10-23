@@ -133,8 +133,9 @@ impl Enemy {
         let enemy_color = match (self.is_taking_damage(), self.can_take_damage(), &self.anger_level) {
             (true, _, _) => MAROON,
             (false, false, _) => DARKBROWN,
+            (false, true, EnemyAngerLevel::Neutral) => BLUE,
             (false, true, EnemyAngerLevel::Alert) => DARKBLUE,
-            (false, true, _) => BLUE
+            (false, true, _) => Color { r: 0.5, g: 0.2, b: 1.0, a: 1.0 }
         };
         draw_rectangle(top_left_x, top_left_y, enemy_width, enemy_height, enemy_color);
         match self.current_facing_direction() {

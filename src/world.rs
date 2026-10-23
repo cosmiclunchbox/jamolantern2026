@@ -73,13 +73,13 @@ impl ActiveGameWorld {
         self.enemies.render_all(&self.camera, resources);
 
         draw_text(String::from("FPS: ") + &get_fps().to_string(), 20.0, 20.0, 30.0, DARKGRAY);
-        draw_text(String::from("HP: ") + &self.player.get_current_health().to_string(), 20.0, 100.0, 100.0, DARKGRAY);
-        draw_text(
+        draw_text(String::from("HP:") + &self.player.get_current_health().to_string(), screen_width() - 200.0, 80.0, 100.0, BLACK);
+        /*draw_text(
             String::from("player pos: ") + &self.player.current_x_y_position_center().0.to_string() + ", " + &self.player.current_x_y_position_center().1.to_string(), 
             20.0, 120.0, 30.0, DARKGRAY);
         draw_text(
             String::from("player vel: ") + &self.player.get_current_velocity().0.to_string() + ", " + &self.player.get_current_velocity().1.to_string(), 
-            20.0, 140.0, 30.0, DARKGRAY);
+            20.0, 140.0, 30.0, DARKGRAY);*/
         //draw_fps();
         //draw_fps();
     }
@@ -112,24 +112,24 @@ impl ActiveGameWorld {
         let mut player_y_acceleration = 0.0;
 
         self.context.do_on_key_press(
-            KeyCode::Right,
+            KeyCode::D,
             || {},
-            || { player_x_acceleration = if is_key_down(KeyCode::Left) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
+            || { player_x_acceleration = if is_key_down(KeyCode::A) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
         );
         self.context.do_on_key_press(
-            KeyCode::Left,
+            KeyCode::A,
             || {},
-            || { player_x_acceleration = if is_key_down(KeyCode::Right) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
+            || { player_x_acceleration = if is_key_down(KeyCode::D) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
         );
         self.context.do_on_key_press(
-            KeyCode::Down,
+            KeyCode::S,
             || {},
-            || { player_y_acceleration = if is_key_down(KeyCode::Up) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
+            || { player_y_acceleration = if is_key_down(KeyCode::W) { 0.0 } else { PLAYER_MOVEMENT_SPEED * delta_time } }
         );
         self.context.do_on_key_press(
-            KeyCode::Up,
+            KeyCode::W,
             || {},
-            || { player_y_acceleration = if is_key_down(KeyCode::Down) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
+            || { player_y_acceleration = if is_key_down(KeyCode::S) { 0.0 } else { -PLAYER_MOVEMENT_SPEED * delta_time } }
         );
         
         /*if is_key_down(KeyCode::Right) {

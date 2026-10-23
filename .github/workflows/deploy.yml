@@ -31,6 +31,8 @@ jobs:
           cp ./target/wasm32-unknown-unknown/release/jamolantern2026.wasm ./deploy/
           cp index.html ./deploy/
           cp -r assets/ ./deploy/
+          curl -L -o mq_js_bundle.js https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js
+          cp mq_js_bundle.js ./deploy/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

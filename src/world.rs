@@ -58,6 +58,7 @@ impl ActiveGameWorld {
             level.height as f32
         );
         let context = ControlContext::new();
+        //println!("{:?}", context);
         ActiveGameWorld {
             level,
             camera,
@@ -209,6 +210,7 @@ impl ActiveGameWorld {
 }
 
 
+#[derive(Debug)]
 struct ControlContext {
     keys_pressed_down: HashMap<KeyCode, bool>
 }
@@ -216,10 +218,10 @@ struct ControlContext {
 impl ControlContext {
     fn new() -> ControlContext {
         let mut keys_pressed_down = HashMap::new();
-        keys_pressed_down.insert(KeyCode::Right, false);
-        keys_pressed_down.insert(KeyCode::Left, false);
-        keys_pressed_down.insert(KeyCode::Up, false);
-        keys_pressed_down.insert(KeyCode::Down, false);
+        keys_pressed_down.insert(KeyCode::A, false);
+        keys_pressed_down.insert(KeyCode::D, false);
+        keys_pressed_down.insert(KeyCode::W, false);
+        keys_pressed_down.insert(KeyCode::S, false);
         ControlContext {
             keys_pressed_down
         }
@@ -232,6 +234,7 @@ impl ControlContext {
         mut when_held: impl FnMut() -> ()
     ) {
         if is_key_down(key) {
+            //println!("{:?}", self.keys_pressed_down);
             let Some(is_pressed) = self.keys_pressed_down.get(&key) else {
                 panic!("attempted to check for key press that is not stored in context 2shkldsfl");
                 return

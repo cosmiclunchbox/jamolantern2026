@@ -1,4 +1,11 @@
+use macroquad::audio::PlaySoundParams;
+use macroquad::audio::play_sound;
 use macroquad::prelude::*;
+
+use kira::{
+	AudioManager, AudioManagerSettings, DefaultBackend,
+	sound::static_sound::{StaticSoundData, StaticSoundSettings},
+};
 
 mod resources;
 mod level;
@@ -102,6 +109,9 @@ impl GameState {
 async fn main() {
     set_pc_assets_folder("assets");
     let resources = Resources::load().await;
+    let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
+    manager.play(resources.bgm.clone());
+    
     let mut game_state = GameState::MainMenu(MainMenu::new());
     loop {
         game_state = game_state.update_on_each_frame_and_transition_scene();

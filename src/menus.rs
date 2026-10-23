@@ -17,6 +17,7 @@ impl MainMenu {
         draw_text("wasd to move", 100.0, 400.0, 50.0, DARKGRAY);
         draw_text("space to use your package as a weapon", 100.0, 500.0, 50.0, DARKGRAY);
         draw_text("press space to begin", 100.0, 600.0, 50.0, DARKGRAY);
+        draw_text("made in october 2026 by dustin z. for jam-o-lantern", 100.0, screen_height() - 30.0, 30.0, DARKGRAY);
     }
 
     pub fn update_on_each_frame(&self) -> GameSceneTransition {

@@ -13,7 +13,7 @@ impl MainMenu {
 
     pub fn render(&self) {
         clear_background(LIGHTGRAY);
-        draw_text("package of no return", 100.0, 200.0, 100.0, DARKGRAY);
+        draw_text("package returning game", 100.0, 200.0, 100.0, DARKGRAY);
         draw_text("wasd to move", 100.0, 400.0, 50.0, DARKGRAY);
         draw_text("space to use your package as a weapon", 100.0, 500.0, 50.0, DARKGRAY);
         draw_text("press space to begin", 100.0, 600.0, 50.0, DARKGRAY);

@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-getrandom = { version = "0.4.3", features = ["wasm_js"] }
+#getrandom = { version = "0.4.3", features = ["wasm_js"] }
 #kira = "0.12.5"
 macroquad = "0.4.14"
 ndarray = "0.17.2"
-rand = "0.10.3"
+#rand = "0.10.3"
 time = "0.3.55"

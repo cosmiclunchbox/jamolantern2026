@@ -3,7 +3,8 @@ mod enemy_anger;
 
 use macroquad::miniquad::gl::GL_RED;
 use macroquad::prelude::*;
-use ::rand::{random, random_range};
+use macroquad::rand;
+//use ::rand::{random, random_range};
 use time::{SignedDuration, Timestamp};
 
 use crate::attack_manager::AttackManager;
@@ -72,14 +73,15 @@ impl EnemyHesitationManager {
     }
 
     fn randomly_hesitate(&mut self, new_decision: EnemyDecision) {
-        let hesitation_roll = random::<f32>();
+        let hesitation_roll = rand::gen_range(0.0, 1.0);// random::<f32>();
+        //println!("{}", hesitation_roll);
         if hesitation_roll >= ENEMY_HESITATION_CHANCE {
             //println!("{:?}", hesitation_roll);
             self.previous_decision = new_decision;
             return;
         }
         
-        let hesitation_time = random_range(ENEMY_HESITATION_MIN_LENGTH_MS..=ENEMY_HESITATION_MAX_LENGTH_MS);
+        let hesitation_time = rand::gen_range(ENEMY_HESITATION_MIN_LENGTH_MS, ENEMY_HESITATION_MAX_LENGTH_MS);
         let expires_at: Timestamp = Timestamp::now().checked_add(
             SignedDuration::milliseconds(hesitation_time as i64)
         ).expect("gonna just expect this checked add should work ig");

@@ -1,6 +1,6 @@
-pub const WINDOW_TITLE: &str = "window title";
-pub const LEVEL_FILE_PATH: &str = "level.txt";
-pub const ENEMIES_FILE_PATH: &str = "enemies.txt";
+pub const WINDOW_TITLE: &str = "package returning game";
+pub const LEVEL_FILE_PATH: &str = "assets/level.txt";
+pub const ENEMIES_FILE_PATH: &str = "assets/enemies.txt";
 
 pub const DRAW_LEVEL_OFFSET_PIXELS_X: f32 = 0.0;
 pub const DRAW_LEVEL_OFFSET_PIXELS_Y: f32 = 0.0;

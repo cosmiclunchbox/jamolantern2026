@@ -1,7 +1,5 @@
-use macroquad::audio::Sound;
-use macroquad::audio::load_sound;
 use macroquad::prelude::*;
-use kira::StaticSoundData;
+//use kira::StaticSoundData;
 
 pub struct Resources {
     pub level_road1: Texture2D,
@@ -23,7 +21,7 @@ pub struct Resources {
     pub level_uspswin: Texture2D,
     pub level_hazard1: Texture2D,
     pub player_package: Texture2D,
-    pub bgm: Sound,
+    //pub bgm: Sound,
 }
 
 impl Resources {
@@ -67,7 +65,7 @@ impl Resources {
         level_hazard1.set_filter(FilterMode::Nearest);
         let player_package = load_texture("package.png").await.expect("package.png should exist");
         player_package.set_filter(FilterMode::Nearest);
-        let bgm = StaticSoundData::from_file("bgm.ogg")?;
+        //let bgm = load_sound("bgm.ogg").await.expect("bgm should load");
         build_textures_atlas();
 
         Resources {
@@ -90,7 +88,7 @@ impl Resources {
             level_uspswin,
             level_hazard1,
             player_package,
-             bgm
+            //bgm
         }
     }
 }
